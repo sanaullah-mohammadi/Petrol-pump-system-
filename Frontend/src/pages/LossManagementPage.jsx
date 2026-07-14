@@ -289,7 +289,7 @@ export default function LossManagementPage() {
                 <SelectContent>
                   <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
                   {fuelTypes.map((ft) => (
-                    <SelectItem key={ft.id} value={ft.id}>
+                    <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
                       <div className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
                         {ft.name}
@@ -560,7 +560,7 @@ export default function LossManagementPage() {
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
                       {fuelTypes.map((ft) => (
-                        <SelectItem key={ft.id} value={ft.id}>
+                        <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
                           <div className="flex items-center gap-1.5">
                             <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
                             {ft.name}

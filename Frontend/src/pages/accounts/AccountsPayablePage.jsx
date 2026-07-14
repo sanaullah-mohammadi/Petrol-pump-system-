@@ -202,8 +202,8 @@ export default function AccountsPayablePage() {
         {/* ── Summary stat cards ──────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {/* Total owed */}
-          <Card>
-            <CardContent className="p-4">
+          <Card className="border-l-4 border-l-destructive">
+            <CardContent className="p-4 pt-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">
@@ -221,8 +221,8 @@ export default function AccountsPayablePage() {
           </Card>
 
           {/* Total paid */}
-          <Card>
-            <CardContent className="p-4">
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-4 pt-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("totalPaid")}</p>
@@ -238,8 +238,8 @@ export default function AccountsPayablePage() {
           </Card>
 
           {/* Unpaid suppliers */}
-          <Card>
-            <CardContent className="p-4">
+          <Card className="border-l-4 border-l-orange-500">
+            <CardContent className="p-4 pt-5">
               <p className="text-xs text-muted-foreground">{lang === "ps" ? "نه‌تادیه" : "Unpaid Suppliers"}</p>
               <p className="mt-1 text-xl font-bold text-destructive">{unpaidCount}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -249,8 +249,8 @@ export default function AccountsPayablePage() {
           </Card>
 
           {/* Payment history count */}
-          <Card>
-            <CardContent className="p-4">
+          <Card className="border-l-4 border-l-primary">
+            <CardContent className="p-4 pt-5">
               <p className="text-xs text-muted-foreground">
                 {lang === "ps" ? "د تادیو شمیر" : "Payments Made"}
               </p>

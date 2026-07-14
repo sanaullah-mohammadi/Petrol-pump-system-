@@ -142,13 +142,23 @@ export default function EmployeeSalesPage() {
 
         {/* ── Filters ──────────────────────────────────────────────────────── */}
         <Card>
-          <CardContent className="flex flex-wrap items-end gap-3 p-4">
+          <CardContent className="flex flex-wrap items-end gap-3 p-4 pt-5">
             {/* Employee selector — admin/manager only */}
             {canSeeAll && (
               <div className="flex min-w-[180px] flex-1 flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground">{t("employeeName")}</label>
                 <Select value={selectedEmpId} onValueChange={setSelectedEmpId}>
-                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue>
+                      {selectedEmpId === "all"
+                        ? (lang === "ps" ? "ټول کارمندان" : "All Employees")
+                        : (() => {
+                            const emp = activeEmployees.find((e) => e.id === selectedEmpId);
+                            return emp ? emp.fullName : (lang === "ps" ? "ټول کارمندان" : "All Employees");
+                          })()
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{lang === "ps" ? "ټول کارمندان" : "All Employees"}</SelectItem>
                     {activeEmployees.map((e) => (

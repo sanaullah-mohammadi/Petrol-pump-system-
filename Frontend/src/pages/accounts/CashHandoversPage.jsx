@@ -23,7 +23,7 @@ import toast from "react-hot-toast";
 import { format } from "date-fns";
 import {
   FiPlus, FiCheckCircle, FiXCircle, FiBell, FiClock, FiDollarSign,
-  FiEye, FiSearch, FiFilter,
+  FiEye, FiSearch, FiFilter, FiHash, FiAlertCircle,
 } from "react-icons/fi";
 
 import { useAppSelector } from "@/components/context/hooks";
@@ -262,6 +262,77 @@ export default function CashHandoversPage() {
   return (
     <AppLayout title={t("handoverList")}>
       <div className="space-y-5">
+
+        {/* ── Summary stat cards ──────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {/* Total handovers */}
+          <Card className="border-l-4 border-l-primary">
+            <CardContent className="p-4 pt-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول سپارونه" : "Total Handovers"}</p>
+                  <p className="mt-1 text-xl font-bold text-foreground">{allVisible.length}</p>
+                </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <FiHash className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total cash */}
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-4 pt-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول نقد" : "Total Cash"}</p>
+                  <p className="mt-1 text-xl font-bold text-green-600 dark:text-green-400">
+                    {fmtCurrency(allVisible.reduce((s, h) => s + (h.cashAmount ?? 0), 0), lang)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10">
+                  <FiDollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pending */}
+          <Card className="border-l-4 border-l-yellow-500">
+            <CardContent className="p-4 pt-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{lang === "ps" ? "پاتې" : "Pending"}</p>
+                  <p className="mt-1 text-xl font-bold text-yellow-600 dark:text-yellow-400">{pendingCount}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {fmtCurrency(allVisible.filter((h) => h.status === "pending").reduce((s, h) => s + (h.cashAmount ?? 0), 0), lang)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10">
+                  <FiAlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Confirmed */}
+          <Card className="border-l-4 border-l-blue-500">
+            <CardContent className="p-4 pt-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{lang === "ps" ? "تایید شوي" : "Confirmed"}</p>
+                  <p className="mt-1 text-xl font-bold text-blue-600 dark:text-blue-400">{confirmedCount}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {fmtCurrency(allVisible.filter((h) => h.status === "confirmed").reduce((s, h) => s + (h.cashAmount ?? 0), 0), lang)}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
+                  <FiCheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* ── Pending notification banner (manager/admin only) ─────────────── */}
         {canManage && pendingCount > 0 && (

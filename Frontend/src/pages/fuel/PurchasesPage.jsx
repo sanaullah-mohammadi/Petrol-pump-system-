@@ -326,7 +326,7 @@ export default function PurchasesPage() {
                 <SelectContent>
                   <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
                   {fuelTypes.map((ft) => (
-                    <SelectItem key={ft.id} value={ft.id}>
+                    <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
                       <div className="flex items-center gap-1.5">
                         <span
                           className="h-2 w-2 rounded-full"

@@ -179,17 +179,18 @@ export default function TanksPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <AppLayout title={t("tankList")}>
-      <div className="space-y-5">
+      <div className="space-y-5 pt-1">
 
         {/* ── Stat cards ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {/* Total tanks */}
           <Card className="h-full border-l-4 border-l-primary">
-            <CardContent className="p-4">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول ټانکونه" : "Total Tanks"}</p>
                   <p className="mt-1 text-xl font-bold text-foreground">{totalCount}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{totalCapacity.toLocaleString()}L cap</p>
                 </div>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                   <FiLayers className="h-5 w-5 text-primary" />
@@ -199,11 +200,12 @@ export default function TanksPage() {
           </Card>
           {/* Active */}
           <Card className="h-full border-l-4 border-l-green-500">
-            <CardContent className="p-4">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("active")}</p>
                   <p className="mt-1 text-xl font-bold text-green-600 dark:text-green-400">{activeCount}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{totalStock.toLocaleString()}L stock</p>
                 </div>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10">
                   <FiCheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -213,11 +215,12 @@ export default function TanksPage() {
           </Card>
           {/* Low Stock */}
           <Card className={`h-full border-l-4 ${lowStockCount > 0 ? "border-l-destructive" : "border-l-slate-400"}`}>
-            <CardContent className="p-4">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "لږ ذخیره" : "Low Stock"}</p>
                   <p className={`mt-1 text-xl font-bold ${lowStockCount > 0 ? "text-destructive" : "text-muted-foreground"}`}>{lowStockCount}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{lowStockCount > 0 ? "Needs restocking" : "All OK"}</p>
                 </div>
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${lowStockCount > 0 ? "bg-destructive/10" : "bg-muted"}`}>
                   <FiAlertTriangle className={`h-5 w-5 ${lowStockCount > 0 ? "text-destructive" : "text-muted-foreground"}`} />
@@ -227,7 +230,7 @@ export default function TanksPage() {
           </Card>
           {/* Maintenance */}
           <Card className="h-full border-l-4 border-l-yellow-500">
-            <CardContent className="p-4">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ساتنه" : "Maintenance"}</p>
@@ -287,7 +290,7 @@ export default function TanksPage() {
               <SelectContent>
                 <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
                 {fuelTypes.map((ft) => (
-                  <SelectItem key={ft.id} value={ft.id}>
+                  <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
                     <div className="flex items-center gap-1.5">
                       <span
                         className="h-2 w-2 rounded-full"
