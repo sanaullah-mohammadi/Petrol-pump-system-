@@ -66,6 +66,29 @@ function kpiColor(label, value) {
   return "text-foreground";
 }
 
+// ── KPI card icon + border based on label semantics ───────────────────────────
+function kpiMeta(label) {
+  const lower = label.toLowerCase();
+  if (lower.includes("revenue") || lower.includes("sales"))
+    return { icon: FiDollarSign, border: "border-l-green-500",  iconBg: "bg-green-500/10",  iconColor: "text-green-600 dark:text-green-400" };
+  if (lower.includes("profit"))
+    return { icon: FiTrendingUp,  border: "border-l-primary",   iconBg: "bg-primary/10",    iconColor: "text-primary" };
+  if (lower.includes("cost"))
+    return { icon: FiDroplet,     border: "border-l-orange-500", iconBg: "bg-orange-500/10", iconColor: "text-orange-600 dark:text-orange-400" };
+  if (lower.includes("expense"))
+    return { icon: FiTrendingDown, border: "border-l-yellow-500", iconBg: "bg-yellow-500/10", iconColor: "text-yellow-600 dark:text-yellow-400" };
+  if (lower.includes("loss"))
+    return { icon: FiAlertTriangle, border: "border-l-destructive", iconBg: "bg-destructive/10", iconColor: "text-destructive" };
+  if (lower.includes("liter") || lower.includes("stock"))
+    return { icon: FiDroplet,     border: "border-l-cyan-500",  iconBg: "bg-cyan-500/10",   iconColor: "text-cyan-600 dark:text-cyan-400" };
+  if (lower.includes("transaction") || lower.includes("record"))
+    return { icon: FiBarChart2,   border: "border-l-indigo-500", iconBg: "bg-indigo-500/10", iconColor: "text-indigo-600 dark:text-indigo-400" };
+  if (lower.includes("customer") || lower.includes("outstanding"))
+    return { icon: FiUsers,       border: "border-l-amber-500", iconBg: "bg-amber-500/10",  iconColor: "text-amber-600 dark:text-amber-400" };
+  // fallback
+  return { icon: FiBarChart2,     border: "border-l-primary",   iconBg: "bg-primary/10",    iconColor: "text-primary" };
+}
+
 export default function ReportsPage() {
   const today = format(new Date(), "yyyy-MM-dd");
   const { t, lang } = useI18n();
@@ -442,8 +465,8 @@ export default function ReportsPage() {
 
         {/* ── Controls card ─────────────────────────────────────────────── */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-end gap-3">
+          <CardContent className="p-4 pt-5">
+            <div className="flex flex-wrap items-end gap-4">
 
               {/* Report type selector with icons */}
               <div className="flex flex-col gap-1">
@@ -501,7 +524,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* ── Report preview ────────────────────────────────────────────── */}
-        <div ref={printRef} className="print:p-8">
+        <div ref={printRef} className="mt-2 print:p-8">
           <Card>
             {/* Report header */}
             <CardHeader className={`rounded-t-xl border-b border-border ${meta.bg}`}>
@@ -535,21 +558,32 @@ export default function ReportsPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-5">
+            <CardContent className="p-5 pt-6">
               {/* ── KPI Summary cards ─────────────────────────────────── */}
               {summary.length > 0 && (
                 <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {summary.map((s) => (
-                    <div
-                      key={s.label}
-                      className="rounded-xl border border-border bg-card p-4 shadow-sm"
-                    >
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
-                      <p className={`mt-1 text-lg font-bold ${kpiColor(s.label, s.value)}`}>
-                        {s.value}
-                      </p>
-                    </div>
-                  ))}
+                  {summary.map((s) => {
+                    const km = kpiMeta(s.label);
+                    const KmIcon = km.icon;
+                    return (
+                      <div
+                        key={s.label}
+                        className={`rounded-xl border border-border border-l-4 ${km.border} bg-card pt-5 p-4 shadow-sm`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-xs text-muted-foreground">{s.label}</p>
+                            <p className={`mt-1 text-lg font-bold ${kpiColor(s.label, s.value)}`}>
+                              {s.value}
+                            </p>
+                          </div>
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${km.iconBg}`}>
+                            <KmIcon className={`h-4 w-4 ${km.iconColor}`} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

@@ -190,50 +190,51 @@ export default function ProfitLossPage() {
               label: t("totalRevenue"),
               value: totalRevenue,
               icon: FiDollarSign,
-              color: "bg-primary/10 text-primary",
-              positive: true,
+              iconColor: "bg-primary/10 text-primary",
+              valueColor: "text-foreground",
+              border: "border-l-primary",
             },
             {
               label: t("fuelCost"),
               value: fuelCost,
               icon: FiDroplet,
-              color: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-              positive: false,
+              iconColor: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+              valueColor: "text-foreground",
+              border: "border-l-orange-500",
             },
             {
               label: t("totalExpenses"),
               value: totalExpenses,
               icon: FiTrendingDown,
-              color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
-              positive: false,
+              iconColor: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+              valueColor: "text-foreground",
+              border: "border-l-yellow-500",
             },
             {
               label: t("netProfit"),
               value: netProfit,
               icon: FiTrendingUp,
-              color:
-                netProfit >= 0
-                  ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                  : "bg-destructive/10 text-destructive",
-              positive: netProfit >= 0,
+              iconColor: netProfit >= 0
+                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                : "bg-destructive/10 text-destructive",
+              valueColor: netProfit >= 0
+                ? "text-green-600 dark:text-green-400"
+                : "text-destructive",
+              border: netProfit >= 0 ? "border-l-green-500" : "border-l-destructive",
             },
           ].map((kpi) => (
-            <Card key={kpi.label} className="h-full">
-              <CardContent className="p-4">
+            <Card key={kpi.label} className={`h-full border-l-4 ${kpi.border}`}>
+              <CardContent className="p-4 pt-5">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-pretty text-xs text-muted-foreground">
                       {kpi.label}
                     </p>
-                    <p
-                      className={`mt-1 text-xl font-bold ${kpi.value < 0 ? "text-destructive" : "text-foreground"}`}
-                    >
+                    <p className={`mt-1 text-xl font-bold ${kpi.value < 0 ? "text-destructive" : kpi.valueColor}`}>
                       {fmtCurrency(Math.abs(kpi.value), lang)}
                     </p>
                   </div>
-                  <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${kpi.color}`}
-                  >
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${kpi.iconColor}`}>
                     <kpi.icon className="h-4 w-4" />
                   </div>
                 </div>

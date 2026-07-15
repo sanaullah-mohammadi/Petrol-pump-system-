@@ -76,6 +76,13 @@ const typeIcons = {
   Treasury: "🏛️",
 };
 
+const typeBorderColor = {
+  "Bank Account": "border-l-blue-500",
+  "Sarafi":       "border-l-orange-500",
+  "Office Safe":  "border-l-primary",
+  "Treasury":     "border-l-green-500",
+};
+
 export default function CashStoragePage() {
   const qc = useQueryClient();
   const { t, lang } = useI18n();
@@ -196,12 +203,13 @@ export default function CashStoragePage() {
     <AppLayout title={t("cashStorageTitle")}>
       <div className="space-y-6">
         {/* Summary cards — one card per unique type+currency group */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-wrap justify-center gap-4">
           {groups.map((g) => {
             const groupTotal = g.items.reduce((a, s) => a + s.balance, 0);
+            const borderColor = typeBorderColor[g.type] ?? "border-l-primary";
             return (
-              <Card key={`${g.type}||${g.currency}`} className="h-full">
-                <CardContent className="p-4">
+              <Card key={`${g.type}||${g.currency}`} className={`w-full border-l-4 sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)] ${borderColor}`}>
+                <CardContent className="p-4 pt-5">
                   {/* Group header */}
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
