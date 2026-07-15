@@ -155,5 +155,14 @@ export const customerPaymentsApi = {
   delete: (id) => remove("customerPayments", id),
 };
 
+// ── Suppliers ─────────────────────────────────────────────────────────────────
+export const suppliersApi = {
+  getAll: () => getAll("suppliers"),
+  getById: (id) => getById("suppliers", id),
+  create: (data) => create("suppliers", data),
+  update: (id, data) => update("suppliers", id, data),
+  delete: (id) => remove("suppliers", id),
+};
+
 // Re-export db for direct access when needed
 export { db };

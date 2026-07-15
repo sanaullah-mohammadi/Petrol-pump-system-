@@ -14,19 +14,29 @@
  *     </AlertDialogContent>
  *   </AlertDialog>
  */
+import { createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./button.jsx";
+
+// ── Internal context so Cancel can call onOpenChange(false) automatically ─────
+const AlertDialogContext = createContext(null);
 
 export function AlertDialog({ open, onOpenChange, children }) {
   if (!open) return null;
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      role="alertdialog"
-    >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      {children}
-    </div>,
+    <AlertDialogContext.Provider value={onOpenChange}>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        role="alertdialog"
+      >
+        {/* backdrop — click to close */}
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={() => onOpenChange?.(false)}
+        />
+        {children}
+      </div>
+    </AlertDialogContext.Provider>,
     document.body,
   );
 }
@@ -96,11 +106,18 @@ export function AlertDialogCancel({
   onClick,
   ...props
 }) {
+  const onOpenChange = useContext(AlertDialogContext);
+
+  const handleClick = (e) => {
+    onClick?.(e);
+    onOpenChange?.(false);
+  };
+
   return (
     <Button
       variant="outline"
       className={className}
-      onClick={onClick}
+      onClick={handleClick}
       {...props}
     >
       {children}

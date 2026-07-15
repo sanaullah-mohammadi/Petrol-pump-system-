@@ -55,15 +55,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const schema = z.object({
-  name: z.string().min(1, "Name is required"),
-  fuelTypeId: z.string().min(1, "Fuel required"),
-  capacity: z.coerce.number().min(1, "Capacity must be > 0"),
-  currentStock: z.coerce.number().min(0),
-  minimumLevel: z.coerce.number().min(0),
-  status: z.enum(["active", "inactive", "maintenance"]),
-  location: z.string().optional(),
-});
+const schema = z
+  .object({
+    name: z.string().min(1, "Name is required"),
+    fuelTypeId: z.string().min(1, "Fuel required"),
+    capacity: z.coerce.number().min(1, "Capacity must be > 0"),
+    currentStock: z.coerce.number().min(0),
+    minimumLevel: z.coerce.number().min(0),
+    status: z.enum(["active", "inactive", "maintenance"]),
+    location: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.currentStock > data.capacity) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Current stock (${data.currentStock}L) cannot exceed capacity (${data.capacity}L)`,
+        path: ["currentStock"],
+      });
+    }
+    if (data.minimumLevel > data.capacity) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Min. level (${data.minimumLevel}L) cannot exceed capacity (${data.capacity}L)`,
+        path: ["minimumLevel"],
+      });
+    }
+  });
 
 export default function TanksPage() {
   const qc = useQueryClient();
@@ -581,21 +598,36 @@ export default function TanksPage() {
                 <FormField control={form.control} name="capacity" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("capacityL")}</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={(e) => {
+                        field.onChange(e);
+                        form.trigger(["currentStock", "minimumLevel"]);
+                      }} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="currentStock" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("currentStockL")}</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={(e) => {
+                        field.onChange(e);
+                        form.trigger("currentStock");
+                      }} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="minimumLevel" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("minLevelL")}</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={(e) => {
+                        field.onChange(e);
+                        form.trigger("minimumLevel");
+                      }} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

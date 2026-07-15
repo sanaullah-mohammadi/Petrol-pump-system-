@@ -701,5 +701,49 @@
       "method": "cash",
       "notes": "Payment from City Taxis"
     }
+  ],
+  "suppliers": [
+    {
+      "id": "1",
+      "supplierId": "SUP-001",
+      "companyName": "Al-Baraka Petroleum",
+      "contactPerson": "Ahmad Karimi",
+      "phone": "0700123456",
+      "email": "albaraka@fuel.af",
+      "address": "Kabul Industrial Zone, Block 3",
+      "fuelTypes": ["Petrol", "Diesel"],
+      "paymentTerms": "net30",
+      "status": "active",
+      "notes": "Primary petrol supplier",
+      "registeredAt": "2025-01-10"
+    },
+    {
+      "id": "2",
+      "supplierId": "SUP-002",
+      "companyName": "Shinwari Oil Co.",
+      "contactPerson": "Haji Shinwari",
+      "phone": "0712345678",
+      "email": "shinwari@oilco.af",
+      "address": "Jalalabad Road, Km 5",
+      "fuelTypes": ["Diesel"],
+      "paymentTerms": "cod",
+      "status": "active",
+      "notes": "Reliable diesel supplier",
+      "registeredAt": "2025-02-15"
+    },
+    {
+      "id": "3",
+      "supplierId": "SUP-003",
+      "companyName": "Central Gas Supply",
+      "contactPerson": "Rahimullah Safi",
+      "phone": "0799876543",
+      "email": "centralgaz@supply.af",
+      "address": "Kandahar Highway, Zone B",
+      "fuelTypes": ["Gas (CNG)"],
+      "paymentTerms": "net15",
+      "status": "inactive",
+      "notes": "CNG supplier — seasonal contract",
+      "registeredAt": "2025-03-01"
+    }
   ]
 }
