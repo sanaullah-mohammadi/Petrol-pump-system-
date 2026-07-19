@@ -149,20 +149,14 @@ export default function EmployeeSalesPage() {
                 <label className="text-xs font-medium text-muted-foreground">{t("employeeName")}</label>
                 <Select value={selectedEmpId} onValueChange={setSelectedEmpId}>
                   <SelectTrigger className="h-8 text-sm">
-                    <SelectValue>
-                      {selectedEmpId === "all"
-                        ? (lang === "ps" ? "ټول کارمندان" : "All Employees")
-                        : (() => {
-                            const emp = activeEmployees.find((e) => e.id === selectedEmpId);
-                            return emp ? emp.fullName : (lang === "ps" ? "ټول کارمندان" : "All Employees");
-                          })()
-                      }
-                    </SelectValue>
+                    <SelectValue placeholder={lang === "ps" ? "ټول کارمندان" : "All Employees"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{lang === "ps" ? "ټول کارمندان" : "All Employees"}</SelectItem>
+                    <SelectItem value="all" textValue={lang === "ps" ? "ټول کارمندان" : "All Employees"}>
+                      {lang === "ps" ? "ټول کارمندان" : "All Employees"}
+                    </SelectItem>
                     {activeEmployees.map((e) => (
-                      <SelectItem key={e.id} value={e.id}>
+                      <SelectItem key={e.id} value={e.id} textValue={e.fullName}>
                         {e.fullName}
                         <span className="ms-1 text-xs capitalize text-muted-foreground">({e.role})</span>
                       </SelectItem>

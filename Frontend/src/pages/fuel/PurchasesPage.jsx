@@ -16,7 +16,7 @@ import { format } from "date-fns";
 
 import { TablePagination } from "@/components/ui/pagination";
 
-import { purchasesApi, fuelTypesApi, tanksApi } from "@/services/api";
+import { purchasesApi, fuelTypesApi, tanksApi, suppliersApi } from "@/services/api";
 
 import StatusBadge from "@/components/features/common/StatusBadge";
 import AppLayout from "@/components/features/layouts/AppLayout";
@@ -97,6 +97,10 @@ export default function PurchasesPage() {
   const { data: tanks = [] } = useQuery({
     queryKey: ["tanks"],
     queryFn: tanksApi.getAll,
+  });
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["suppliers"],
+    queryFn: suppliersApi.getAll,
   });
 
   const form = useForm({
@@ -213,15 +217,29 @@ export default function PurchasesPage() {
     return [...purchases]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .filter((p) => {
-        if (q && !p.supplierName.toLowerCase().includes(q) &&
-            !p.purchaseId.toLowerCase().includes(q)) return false;
+        if (q) {
+          const ft   = fuelTypes.find((f) => f.id === p.fuelTypeId);
+          const tank = tanks.find((tk) => tk.id === p.tankId);
+          const haystack = [
+            p.purchaseId,
+            p.supplierName,
+            ft?.name,
+            tank?.name,
+            String(p.quantity ?? ""),
+            String(p.totalAmount ?? ""),
+            String(p.pricePerLiter ?? ""),
+            p.date,
+            p.paymentStatus,
+          ].join(" ").toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
         if (fuelFilter    !== "all" && p.fuelTypeId     !== fuelFilter)    return false;
         if (paymentFilter !== "all" && p.paymentStatus  !== paymentFilter) return false;
         if (dateFrom && p.date < dateFrom) return false;
         if (dateTo   && p.date > dateTo)   return false;
         return true;
       });
-  }, [purchases, search, fuelFilter, paymentFilter, dateFrom, dateTo]);
+  }, [purchases, fuelTypes, tanks, search, fuelFilter, paymentFilter, dateFrom, dateTo]);
 
   useEffect(() => { setPage(1); }, [search, fuelFilter, paymentFilter, dateFrom, dateTo]);
 
@@ -567,15 +585,112 @@ export default function PurchasesPage() {
               <FormField
                 control={form.control}
                 name="supplierName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("supplier")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder="National Fuel Co." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const [open, setOpen] = useState(false);
+                  const [supplierSearch, setSupplierSearch] = useState("");
+                  const activeSuppliers = suppliers.filter((s) => s.status === "active");
+                  const inactiveSuppliers = suppliers.filter((s) => s.status === "inactive");
+                  const q = supplierSearch.toLowerCase();
+                  const filterSup = (list) => list.filter((s) =>
+                    s.companyName.toLowerCase().includes(q) ||
+                    s.contactPerson.toLowerCase().includes(q) ||
+                    s.phone.includes(q)
+                  );
+                  const filteredActive   = filterSup(activeSuppliers);
+                  const filteredInactive = filterSup(inactiveSuppliers);
+                  return (
+                    <FormItem>
+                      <FormLabel>{t("supplier")} <span className="text-destructive">*</span></FormLabel>
+                      <div className="relative">
+                        {/* Trigger */}
+                        <button
+                          type="button"
+                          onClick={() => { setOpen((v) => !v); setSupplierSearch(""); }}
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          <span className={field.value ? "text-foreground" : "text-muted-foreground"}>
+                            {field.value || (lang === "ps" ? "عرضه کوونکی غوره کړئ" : "Select supplier")}
+                          </span>
+                          <svg className="h-4 w-4 shrink-0 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+
+                        {open && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+                            <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-background shadow-lg">
+                              {/* Search box */}
+                              <div className="border-b border-border p-2">
+                                <input
+                                  autoFocus
+                                  value={supplierSearch}
+                                  onChange={(e) => setSupplierSearch(e.target.value)}
+                                  placeholder={lang === "ps" ? "لټون..." : "Search supplier..."}
+                                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                />
+                              </div>
+
+                              {/* Scrollable list */}
+                              <div className="max-h-52 overflow-y-auto">
+                                {/* Active suppliers */}
+                                {filteredActive.length > 0 && (
+                                  <>
+                                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                      {lang === "ps" ? "فعال" : "Active"}
+                                    </div>
+                                    {filteredActive.map((s) => (
+                                      <div
+                                        key={s.id}
+                                        onClick={() => { field.onChange(s.companyName); setOpen(false); }}
+                                        className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-muted/60 ${field.value === s.companyName ? "bg-primary/5" : ""}`}
+                                      >
+                                        <div className="flex min-w-0 flex-1 flex-col">
+                                          <span className="text-sm font-medium">{s.companyName}</span>
+                                          <span className="text-xs text-muted-foreground">{s.contactPerson} · {s.phone}</span>
+                                        </div>
+                                        {field.value === s.companyName && (
+                                          <svg className="h-4 w-4 shrink-0 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <path d="m5 13 4 4L19 7" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </>
+                                )}
+
+                                {/* Inactive suppliers */}
+                                {filteredInactive.length > 0 && (
+                                  <>
+                                    <div className="border-t border-border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                      {lang === "ps" ? "غیرفعال" : "Inactive"}
+                                    </div>
+                                    {filteredInactive.map((s) => (
+                                      <div
+                                        key={s.id}
+                                        onClick={() => { field.onChange(s.companyName); setOpen(false); }}
+                                        className="flex cursor-pointer items-center gap-3 px-3 py-2.5 opacity-60 hover:bg-muted/60"
+                                      >
+                                        <span className="text-sm">{s.companyName}</span>
+                                      </div>
+                                    ))}
+                                  </>
+                                )}
+
+                                {filteredActive.length === 0 && filteredInactive.length === 0 && (
+                                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                                    {lang === "ps" ? "کوم عرضه کوونکی ونه موندل شو" : "No suppliers found"}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
               <div className="grid grid-cols-2 gap-4">
                 <FormField

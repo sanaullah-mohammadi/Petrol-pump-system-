@@ -177,8 +177,16 @@ export default function FuelTypesPage() {
 
   // ── Filtered / searched list ─────────────────────────────────────────────
   const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
     return fuelTypes.filter((ft) => {
-      const matchesSearch = ft.name.toLowerCase().includes(search.toLowerCase().trim());
+      const matchesSearch = !q || [
+        ft.name,
+        ft.code ?? "",
+        String(ft.pricePerLiter ?? ""),
+        ft.status,
+        ft.description ?? "",
+        ft.createdAt ?? "",
+      ].join(" ").toLowerCase().includes(q);
       const matchesStatus = statusFilter === "all" || ft.status === statusFilter;
       return matchesSearch && matchesStatus;
     });

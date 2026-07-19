@@ -164,5 +164,25 @@ export const suppliersApi = {
   delete: (id) => remove("suppliers", id),
 };
 
+// ── Pumps ─────────────────────────────────────────────────────────────────────
+export const pumpsApi = {
+  getAll: () => getAll("pumps"),
+  getById: (id) => getById("pumps", id),
+  create: (data) => create("pumps", data),
+  update: (id, data) => update("pumps", id, data),
+  patch: (id, data) => patch("pumps", id, data),
+  delete: (id) => remove("pumps", id),
+};
+
+// ── Salaries ──────────────────────────────────────────────────────────────────
+export const salariesApi = {
+  getAll: () => getAll("salaries"),
+  getById: (id) => getById("salaries", id),
+  create: (data) => create("salaries", data),
+  update: (id, data) => update("salaries", id, data),
+  patch: (id, data) => patch("salaries", id, data),
+  delete: (id) => remove("salaries", id),
+};
+
 // Re-export db for direct access when needed
 export { db };

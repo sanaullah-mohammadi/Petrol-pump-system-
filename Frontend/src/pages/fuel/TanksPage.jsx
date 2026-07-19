@@ -169,7 +169,16 @@ export default function TanksPage() {
       const isLow = tank.currentStock < tank.minimumLevel;
 
       if (q) {
-        const haystack = `${tank.name} ${tank.location ?? ""} ${ft?.name ?? ""}`.toLowerCase();
+        const haystack = [
+          tank.name,
+          tank.location ?? "",
+          ft?.name ?? "",
+          tank.status,
+          String(tank.capacity),
+          String(tank.currentStock),
+          String(tank.minimumLevel),
+          tank.id,
+        ].join(" ").toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       if (fuelFilter   !== "all" && tank.fuelTypeId !== fuelFilter)   return false;

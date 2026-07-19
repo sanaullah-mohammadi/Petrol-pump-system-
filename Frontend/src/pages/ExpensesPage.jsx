@@ -10,7 +10,7 @@ import { z } from "zod";
 
 import toast from "react-hot-toast";
 
-import { FiPlus, FiEdit2, FiTrash2, FiUsers, FiHome, FiWifi, FiTool, FiTruck, FiMonitor, FiShield, FiPackage, FiMoreHorizontal, FiZap } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUsers, FiHome, FiWifi, FiTool, FiTruck, FiMonitor, FiShield, FiPackage, FiMoreHorizontal, FiZap } from "react-icons/fi";
 import { TablePagination } from "@/components/ui/pagination";
 
 import { format } from "date-fns";
@@ -104,8 +104,10 @@ export default function ExpensesPage() {
   const [dialog, setDialog] = useState({ open: false });
   const [deleteId, setDeleteId] = useState(null);
   const [viewRecord, setViewRecord] = useState(null);
-  const [filterType, setFilterType] = useState("all");
-  const [filterMonth, setFilterMonth] = useState("");
+  const [filterType,  setFilterType]  = useState("all");
+  const [filterFrom,  setFilterFrom]  = useState("");
+  const [filterTo,    setFilterTo]    = useState("");
+  const [search,      setSearch]      = useState("");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
@@ -189,18 +191,30 @@ export default function ExpensesPage() {
     else createMutation.mutate(data);
   };
 
-  const filtered = expenses.filter((e) => {
-    const typeMatch = filterType === "all" || e.type === filterType;
-    const monthMatch = !filterMonth || e.date.startsWith(filterMonth);
-    return typeMatch && monthMatch;
-  });
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return expenses.filter((e) => {
+      const typeMatch = filterType === "all" || e.type === filterType;
+      const fromMatch = !filterFrom || e.date >= filterFrom;
+      const toMatch   = !filterTo   || e.date <= filterTo;
+      const textMatch = !q || [
+        e.expenseId ?? "",
+        e.type,
+        String(e.amount ?? ""),
+        e.date,
+        e.description ?? "",
+        e.addedBy ?? "",
+      ].join(" ").toLowerCase().includes(q);
+      return typeMatch && fromMatch && toMatch && textMatch;
+    });
+  }, [expenses, filterType, filterFrom, filterTo, search]);
 
   const sorted = useMemo(() =>
     [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [filtered]
   );
 
-  useEffect(() => { setPage(1); }, [filterType, filterMonth]);
+  useEffect(() => { setPage(1); }, [filterType, filterFrom, filterTo, search]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage   = Math.min(page, totalPages);
@@ -244,47 +258,70 @@ export default function ExpensesPage() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
+            {/* ── Title row ───────────────────────────────────────────── */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Expense Records</CardTitle>
+                <CardTitle className="text-base">{lang === "ps" ? "د لګښت ریکارډونه" : "Expense Records"}</CardTitle>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Showing{" "}
-                  <span className="font-semibold text-foreground">
-                    {filtered.length}
-                  </span>{" "}
-                  records • Total:{" "}
-                  <span className="font-semibold text-foreground">
-                    {fmtCurrency(totalFiltered, lang)}
-                  </span>
+                  {lang === "ps" ? "ښودل:" : "Showing"}{" "}
+                  <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
+                  {lang === "ps" ? "ریکارډونه • ټول:" : "records • Total:"}{" "}
+                  <span className="font-semibold text-foreground">{fmtCurrency(totalFiltered, lang)}</span>
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              {canEdit && (
+                <Button size="sm" onClick={openCreate}>
+                  <FiPlus className="mr-1 h-4 w-4" /> {lang === "ps" ? "لګښت اضافه کول" : "Add Expense"}
+                </Button>
+              )}
+            </div>
+
+            {/* ── Filters — same pattern as CashHandoversPage ───────── */}
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              {/* Search */}
+              <div className="relative min-w-[160px] flex-1">
+                <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  type="month"
-                  value={filterMonth}
-                  onChange={(e) => setFilterMonth(e.target.value)}
-                  className="h-8 w-36"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={lang === "ps" ? "ID / ډول / مبلغ..." : "ID / type / amount..."}
+                  className="h-8 ps-8 text-sm"
                 />
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="h-8 w-36">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    {EXPENSE_TYPE_KEYS.map((ek) => (
-                      <SelectItem key={ek} value={ek}>
-                        {ek}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {canEdit && (
-                  <Button size="sm" onClick={openCreate}>
-                    <FiPlus className="mr-1 h-4 w-4" /> Add Expense
-                  </Button>
-                )}
               </div>
+
+              {/* Type filter */}
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="h-8 w-[150px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{lang === "ps" ? "ټول ډولونه" : "All Types"}</SelectItem>
+                  {EXPENSE_TYPE_KEYS.map((ek) => (
+                    <SelectItem key={ek} value={ek}>{ek}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Date from */}
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                <Input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 w-36 text-sm" />
+              </div>
+
+              {/* Date to */}
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                <Input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 w-36 text-sm" />
+              </div>
+
+              {/* Clear */}
+              {(search || filterType !== "all" || filterFrom || filterTo) && (
+                <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
+                  onClick={() => { setSearch(""); setFilterType("all"); setFilterFrom(""); setFilterTo(""); }}>
+                  {lang === "ps" ? "پاکول" : "Clear"}
+                </Button>
+              )}
             </div>
           </CardHeader>
 

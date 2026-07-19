@@ -162,7 +162,17 @@ export default function AccountsPayablePage() {
   // ── Filtered supplier summary ─────────────────────────────────────────────
   const supplierSummary = useMemo(() => {
     return allSupplierSummary.filter((s) => {
-      if (supplierSearch && !s.name.toLowerCase().includes(supplierSearch.toLowerCase())) return false;
+      if (supplierSearch) {
+        const q = supplierSearch.toLowerCase();
+        const haystack = [
+          s.name,
+          s.status,
+          String(s.totalPurchased ?? ""),
+          String(s.totalPaid ?? ""),
+          String(s.balance ?? ""),
+        ].join(" ").toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
       if (balanceStatus !== "all" && s.status !== balanceStatus) return false;
       return true;
     });
@@ -174,9 +184,18 @@ export default function AccountsPayablePage() {
     return [...supplierPayments]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .filter((sp) => {
-        if (q && !sp.supplierName.toLowerCase().includes(q) &&
-            !sp.paymentId.toLowerCase().includes(q) &&
-            !(sp.purchaseId ?? "").toLowerCase().includes(q)) return false;
+        if (q) {
+          const haystack = [
+            sp.paymentId ?? "",
+            sp.supplierName,
+            sp.purchaseId ?? "",
+            String(sp.amount ?? ""),
+            sp.paymentMethod ?? "",
+            sp.date,
+            sp.notes ?? "",
+          ].join(" ").toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
         if (methodFilter !== "all" && sp.paymentMethod !== methodFilter) return false;
         if (historyFrom && sp.date < historyFrom) return false;
         if (historyTo   && sp.date > historyTo)   return false;

@@ -275,11 +275,21 @@ export default function EmployeesPage() {
     const q = search.toLowerCase().trim();
     return employees.filter((e) => {
       const linkedUser = users.find((u) => u.employeeId === e.employeeId);
-      if (q &&
-          !e.fullName.toLowerCase().includes(q) &&
-          !e.employeeId.toLowerCase().includes(q) &&
-          !(linkedUser?.email ?? "").toLowerCase().includes(q) &&
-          !e.position.toLowerCase().includes(q)) return false;
+      if (q) {
+        const haystack = [
+          e.fullName,
+          e.employeeId,
+          linkedUser?.email ?? "",
+          e.phone,
+          e.position,
+          e.role,
+          e.status,
+          e.idNumber,
+          String(e.salary ?? ""),
+          e.hireDate,
+        ].join(" ").toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
       if (roleFilter   !== "all" && e.role   !== roleFilter)   return false;
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
       if (hireFrom && e.hireDate < hireFrom) return false;

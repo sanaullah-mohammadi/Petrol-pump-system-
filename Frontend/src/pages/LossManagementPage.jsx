@@ -148,15 +148,25 @@ export default function LossManagementPage() {
     return [...losses]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .filter((l) => {
-        if (q && !(l.lossId ?? "").toLowerCase().includes(q) &&
-            !(l.description ?? "").toLowerCase().includes(q)) return false;
+        if (q) {
+          const ft = fuelTypes.find((f) => f.id === l.fuelTypeId);
+          const haystack = [
+            l.lossId ?? "",
+            l.lossType,
+            String(l.amount ?? ""),
+            l.date,
+            l.description ?? "",
+            ft?.name ?? "",
+          ].join(" ").toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
         if (typeFilter !== "all" && l.lossType    !== typeFilter)  return false;
         if (fuelFilter !== "all" && l.fuelTypeId  !== fuelFilter)  return false;
         if (dateFrom && l.date < dateFrom) return false;
         if (dateTo   && l.date > dateTo)   return false;
         return true;
       });
-  }, [losses, search, typeFilter, fuelFilter, dateFrom, dateTo]);
+  }, [losses, fuelTypes, search, typeFilter, fuelFilter, dateFrom, dateTo]);
 
   useEffect(() => { setPage(1); }, [search, typeFilter, fuelFilter, dateFrom, dateTo]);
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -23,13 +23,18 @@ import {
   FiTrendingUp,
   FiUserCheck,
   FiUsers,
+  FiDollarSign,
   FiX,
+  FiCheckCircle,
+  FiClock,
 } from "react-icons/fi";
 import { MdReceiptLong } from "react-icons/md";
+import { useQuery } from "@tanstack/react-query";
 
 import { logout } from "@/components/context/authSlice";
 import { useAppDispatch, useAppSelector } from "@/components/context/hooks";
 import { useI18n } from "@/components/context/i18n";
+import { tanksApi, salariesApi, purchasesApi } from "@/services/api";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +45,94 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// ─── Live notifications hook ──────────────────────────────────────────────────
+function useNotifications() {
+  const { lang } = useI18n();
+  const { data: tanks     = [] } = useQuery({ queryKey: ["tanks"],     queryFn: tanksApi.getAll,     staleTime: 60_000 });
+  const { data: salaries  = [] } = useQuery({ queryKey: ["salaries"],  queryFn: salariesApi.getAll,  staleTime: 60_000 });
+  const { data: purchases = [] } = useQuery({ queryKey: ["purchases"], queryFn: purchasesApi.getAll, staleTime: 60_000 });
+
+  return useMemo(() => {
+    const items = [];
+
+    // 1. Low / critical tank stock
+    tanks.forEach((tk) => {
+      if (tk.status !== "active") return;
+      const pct = tk.capacity > 0 ? (tk.currentStock / tk.capacity) * 100 : 0;
+      if (tk.currentStock <= tk.minimumLevel) {
+        items.push({
+          id: `tank-low-${tk.id}`,
+          type: "danger",
+          icon: FiDroplet,
+          title: lang === "ps" ? `د ټانک کم ذخیره: ${tk.name}` : `Low Tank Stock: ${tk.name}`,
+          desc: lang === "ps"
+            ? `${tk.currentStock.toLocaleString()}L پاتې — د لږتر لږه کچې لاندې`
+            : `${tk.currentStock.toLocaleString()}L remaining — below minimum level`,
+          path: "/fuel/tanks",
+        });
+      } else if (pct < 25) {
+        items.push({
+          id: `tank-warn-${tk.id}`,
+          type: "warning",
+          icon: FiDroplet,
+          title: lang === "ps" ? `د ټانک خبرداری: ${tk.name}` : `Tank Warning: ${tk.name}`,
+          desc: lang === "ps"
+            ? `${Math.round(pct)}% ظرفیت پاتې دی`
+            : `${Math.round(pct)}% capacity remaining`,
+          path: "/fuel/tanks",
+        });
+      }
+    });
+
+    // 2. Pending salary records
+    const pendingSalaries = salaries.filter((s) => s.status === "pending");
+    if (pendingSalaries.length > 0) {
+      items.push({
+        id: "salary-pending",
+        type: "warning",
+        icon: FiDollarSign,
+        title: lang === "ps" ? "پاتې معاشونه" : "Pending Salaries",
+        desc: lang === "ps"
+          ? `${pendingSalaries.length} کارمندان معاش نه دی ترلاسه کړی`
+          : `${pendingSalaries.length} employee${pendingSalaries.length > 1 ? "s" : ""} awaiting salary payment`,
+        path: "/salary",
+      });
+    }
+
+    // 3. Unpaid purchases
+    const unpaidPurchases = purchases.filter((p) => p.paymentStatus === "unpaid");
+    if (unpaidPurchases.length > 0) {
+      items.push({
+        id: "purchases-unpaid",
+        type: "danger",
+        icon: FiCreditCard,
+        title: lang === "ps" ? "نادا شوي پیرودنې" : "Unpaid Purchases",
+        desc: lang === "ps"
+          ? `${unpaidPurchases.length} پیرودنې د تادیې پاتې دي`
+          : `${unpaidPurchases.length} purchase${unpaidPurchases.length > 1 ? "s" : ""} awaiting payment`,
+        path: "/fuel/purchases",
+      });
+    }
+
+    // 4. Partial purchases
+    const partialPurchases = purchases.filter((p) => p.paymentStatus === "partial");
+    if (partialPurchases.length > 0) {
+      items.push({
+        id: "purchases-partial",
+        type: "info",
+        icon: FiClock,
+        title: lang === "ps" ? "نيمه ادا شوي پیرودنې" : "Partially Paid Purchases",
+        desc: lang === "ps"
+          ? `${partialPurchases.length} پیرودنې برخه‌ایي ادا شوي`
+          : `${partialPurchases.length} purchase${partialPurchases.length > 1 ? "s" : ""} partially paid`,
+        path: "/fuel/purchases",
+      });
+    }
+
+    return items;
+  }, [tanks, salaries, purchases, lang]);
+}
+
 // ─── Nav items (keys resolved via t() at render time) ────────────────────────
 function useNavItems() {
   const { t } = useI18n();
@@ -49,9 +142,11 @@ function useNavItems() {
       labelKey: "fuelManagement",
       icon: FiDroplet,
       children: [
-        { labelKey: "fuelTypes", path: "/fuel/types" },
-        { labelKey: "tanks", path: "/fuel/tanks" },
-        { labelKey: "purchases", path: "/fuel/purchases" },
+        { labelKey: "fuelTypes",  path: "/fuel/types" },
+        { labelKey: "tanks",      path: "/fuel/tanks" },
+        { labelKey: "purchases",  path: "/fuel/purchases" },
+        { labelKey: "pumps",      path: "/fuel/pumps" },
+        { labelKey: "suppliers",  path: "/suppliers" },
       ],
       roles: ["admin", "manager"],
     },
@@ -65,6 +160,12 @@ function useNavItems() {
       labelKey: "employees",
       path: "/employees",
       icon: FiUsers,
+      roles: ["admin", "manager"],
+    },
+    {
+      labelKey: "salaryManagement",
+      path: "/salary",
+      icon: FiDollarSign,
       roles: ["admin", "manager"],
     },
     { labelKey: "customers", path: "/customers", icon: FiUserCheck },
@@ -262,6 +363,9 @@ export default function AppLayout({ children, title }) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  const notifications = useNotifications();
+  const notifCount    = notifications.length;
+
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
@@ -352,12 +456,70 @@ export default function AppLayout({ children, title }) {
           {/* Header actions */}
           <div className="flex shrink-0 items-center gap-1">
             {/* Notification bell */}
-            <Button variant="ghost" size="sm" className="relative p-2">
-              <FiBell className="h-4 w-4" />
-              <Badge className="absolute -end-1 -top-1 flex h-4 w-4 items-center justify-center bg-destructive p-0 text-xs text-destructive-foreground">
-                3
-              </Badge>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative p-2">
+                  <FiBell className="h-4 w-4" />
+                  {notifCount > 0 && (
+                    <Badge className="absolute -end-1 -top-1 flex h-4 w-4 items-center justify-center bg-destructive p-0 text-xs text-destructive-foreground">
+                      {notifCount > 9 ? "9+" : notifCount}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                  <span className="text-sm font-semibold">
+                    {lang === "ps" ? "خبرتیاوې" : "Notifications"}
+                  </span>
+                  {notifCount > 0 && (
+                    <Badge variant="secondary" className="text-xs">{notifCount}</Badge>
+                  )}
+                </div>
+
+                {/* Notification items */}
+                {notifCount === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                    <FiCheckCircle className="h-8 w-8 opacity-40" />
+                    <p className="text-xs">{lang === "ps" ? "هیڅ خبرتیا نشته" : "All clear — no notifications"}</p>
+                  </div>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.map((n) => (
+                      <DropdownMenuItem key={n.id} asChild>
+                        <Link
+                          to={n.path}
+                          className="flex cursor-pointer items-start gap-3 px-3 py-2.5"
+                        >
+                          {/* Icon */}
+                          <div className={clsx(
+                            "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                            n.type === "danger"  && "bg-destructive/10 text-destructive",
+                            n.type === "warning" && "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+                            n.type === "info"    && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                          )}>
+                            <n.icon className="h-3.5 w-3.5" />
+                          </div>
+                          {/* Text */}
+                          <div className="min-w-0 flex-1">
+                            <p className={clsx(
+                              "truncate text-xs font-semibold",
+                              n.type === "danger"  && "text-destructive",
+                              n.type === "warning" && "text-yellow-700 dark:text-yellow-400",
+                              n.type === "info"    && "text-blue-700 dark:text-blue-400",
+                            )}>
+                              {n.title}
+                            </p>
+                            <p className="mt-0.5 text-xs text-muted-foreground leading-snug">{n.desc}</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Language selector */}
             <DropdownMenu>

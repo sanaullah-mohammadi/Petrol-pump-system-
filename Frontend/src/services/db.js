@@ -17,6 +17,9 @@ import cashHandoversData from "@/components/data/cashHandovers.json";
 import cashStoragesData from "@/components/data/cashStorages.json";
 import supplierPaymentsData from "@/components/data/supplierPayments.json";
 import customerPaymentsData from "@/components/data/customerPayments.json";
+import suppliersData from "@/components/data/suppliers.json";
+import pumpsData from "@/components/data/pumps.json";
+import salariesData from "@/components/data/salaries.json";
 
 // Deep-clone seed data so JSON imports stay immutable
 const clone = (data) => JSON.parse(JSON.stringify(data));
@@ -36,6 +39,9 @@ export const db = {
   cashStorages: clone(cashStoragesData),
   supplierPayments: clone(supplierPaymentsData),
   customerPayments: clone(customerPaymentsData),
+  suppliers: clone(suppliersData),
+  pumps: clone(pumpsData),
+  salaries: clone(salariesData),
 };
 
 /** Generate a simple incremental id within a collection */

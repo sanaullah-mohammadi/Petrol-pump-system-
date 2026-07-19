@@ -1,0 +1,73 @@
+[
+  {
+    "id": "1",
+    "pumpId": "PMP-001",
+    "name": "Pump P1",
+    "pumpNumber": "P1",
+    "fuelTypeIds": ["1"],
+    "tankAssignments": [
+      { "fuelTypeId": "1", "tankId": "1" }
+    ],
+    "location": "Zone A — North Side",
+    "status": "active",
+    "notes": "Main petrol pump",
+    "installedAt": "2024-01-10"
+  },
+  {
+    "id": "2",
+    "pumpId": "PMP-002",
+    "name": "Pump P2",
+    "pumpNumber": "P2",
+    "fuelTypeIds": ["1", "2"],
+    "tankAssignments": [
+      { "fuelTypeId": "1", "tankId": "2" },
+      { "fuelTypeId": "2", "tankId": "3" }
+    ],
+    "location": "Zone A — North Side",
+    "status": "active",
+    "notes": "Petrol and Diesel pump",
+    "installedAt": "2024-01-10"
+  },
+  {
+    "id": "3",
+    "pumpId": "PMP-003",
+    "name": "Pump P3",
+    "pumpNumber": "P3",
+    "fuelTypeIds": ["2"],
+    "tankAssignments": [
+      { "fuelTypeId": "2", "tankId": "3" }
+    ],
+    "location": "Zone B — South Side",
+    "status": "active",
+    "notes": "Main diesel pump",
+    "installedAt": "2024-01-15"
+  },
+  {
+    "id": "4",
+    "pumpId": "PMP-004",
+    "name": "Pump P4",
+    "pumpNumber": "P4",
+    "fuelTypeIds": ["2"],
+    "tankAssignments": [
+      { "fuelTypeId": "2", "tankId": "3" }
+    ],
+    "location": "Zone B — South Side",
+    "status": "active",
+    "notes": "Secondary diesel pump",
+    "installedAt": "2024-02-01"
+  },
+  {
+    "id": "5",
+    "pumpId": "PMP-005",
+    "name": "Pump P5",
+    "pumpNumber": "P5",
+    "fuelTypeIds": ["3"],
+    "tankAssignments": [
+      { "fuelTypeId": "3", "tankId": "5" }
+    ],
+    "location": "Zone C — East Wing",
+    "status": "active",
+    "notes": "CNG pump",
+    "installedAt": "2024-03-01"
+  }
+]

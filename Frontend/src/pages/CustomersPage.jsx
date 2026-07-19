@@ -189,12 +189,17 @@ export default function CustomersPage() {
     const q = search.toLowerCase().trim();
     return customers.filter((c) => {
       const isOverLimit = c.type === "credit" && c.creditLimit > 0 && c.creditBalance > c.creditLimit;
-      const matchSearch =
-        c.fullName.toLowerCase().includes(q) ||
-        c.customerId?.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        (c.idNumber ?? "").toLowerCase().includes(q) ||
-        (c.notes ?? "").toLowerCase().includes(q);
+      const matchSearch = !q || [
+        c.fullName,
+        c.customerId ?? "",
+        c.phone,
+        c.type,
+        String(c.creditBalance ?? ""),
+        String(c.creditLimit ?? ""),
+        c.status,
+        c.idNumber ?? "",
+        c.notes ?? "",
+      ].join(" ").toLowerCase().includes(q);
       const matchType      = typeFilter    === "all" || c.type   === typeFilter;
       const matchStatus    = statusFilter  === "all" || c.status === statusFilter;
       const matchOverLimit = !overLimitOnly || isOverLimit;

@@ -24,6 +24,7 @@ import {
   customersApi,
   employeesApi,
   tanksApi,
+  pumpsApi,
 } from "@/services/api";
 
 import AppLayout from "@/components/features/layouts/AppLayout";
@@ -88,6 +89,10 @@ export default function SalesPage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
+  // ── Sell mode ─────────────────────────────────────────────────────────────
+  const [sellMode,   setSellMode]   = useState("liters"); // "liters" | "amount"
+  const [amountPaid, setAmountPaid] = useState(0);
+
   // ── Filter state ──────────────────────────────────────────────────────────
   const [search,        setSearch]        = useState("");   // TXN ID or customer name
   const [fuelFilter,    setFuelFilter]    = useState("all");
@@ -121,11 +126,15 @@ export default function SalesPage() {
     queryKey: ["tanks"],
     queryFn: tanksApi.getAll,
   });
+  const { data: pumps = [] } = useQuery({
+    queryKey: ["pumps"],
+    queryFn: pumpsApi.getAll,
+  });
 
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      pumpNumber: "P1",
+      pumpNumber: "",
       fuelTypeId: "",
       customerType: "cash",
       customerId: "",
@@ -139,11 +148,69 @@ export default function SalesPage() {
   });
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form is the designated stack
-  const fuelTypeId = form.watch("fuelTypeId");
+  const fuelTypeId   = form.watch("fuelTypeId");
+  const pumpNumber   = form.watch("pumpNumber");
   const customerType = form.watch("customerType");
-  const liters = form.watch("liters");
+  const liters       = form.watch("liters");
   const pricePerLiter = form.watch("pricePerLiter");
-  const totalAmount = (liters || 0) * (pricePerLiter || 0);
+
+  // In "amount" mode: liters are derived from amountPaid ÷ pricePerLiter
+  const calculatedLiters = sellMode === "amount" && pricePerLiter > 0
+    ? Math.floor((amountPaid / pricePerLiter) * 100) / 100   // truncate to 2dp
+    : null;
+
+  const totalAmount = sellMode === "amount"
+    ? amountPaid
+    : (liters || 0) * (pricePerLiter || 0);
+
+  // Derive the selected pump record and its assigned tank for the selected fuel type
+  const selectedPump = pumps.find((p) => p.pumpNumber === pumpNumber);
+  const assignedTank = (() => {
+    if (!selectedPump || !fuelTypeId) return null;
+    // New format: tankAssignments array
+    if (Array.isArray(selectedPump.tankAssignments) && selectedPump.tankAssignments.length > 0) {
+      const assignment = selectedPump.tankAssignments.find((a) => a.fuelTypeId === fuelTypeId);
+      return assignment ? tanks.find((t) => t.id === assignment.tankId) ?? null : null;
+    }
+    // Legacy fallback: single tankId
+    if (selectedPump.tankId) {
+      const tank = tanks.find((t) => t.id === selectedPump.tankId);
+      return tank?.fuelTypeId === fuelTypeId ? tank : null;
+    }
+    return null;
+  })();
+  const selectedFuelType = fuelTypes.find((f) => f.id === fuelTypeId);
+
+  // Fuel types allowed for selected pump — all types in pump.fuelTypeIds
+  const allowedFuelTypes = selectedPump
+    ? fuelTypes.filter((ft) => {
+        const ids = Array.isArray(selectedPump.fuelTypeIds)
+          ? selectedPump.fuelTypeIds
+          : (selectedPump.fuelTypeId ? [selectedPump.fuelTypeId] : []);
+        return ids.includes(ft.id);
+      })
+    : fuelTypes;
+
+  // When pump changes: reset fuel; auto-select only if the pump has exactly 1 fuel type
+  const handlePumpChange = (pNum) => {
+    form.setValue("pumpNumber", pNum);
+    form.setValue("fuelTypeId", "");
+    form.setValue("pricePerLiter", 0);
+    const pump = pumps.find((p) => p.pumpNumber === pNum);
+    if (pump) {
+      const ids = Array.isArray(pump.fuelTypeIds)
+        ? pump.fuelTypeIds
+        : (pump.fuelTypeId ? [pump.fuelTypeId] : []);
+      if (ids.length === 1) {
+        const ft = fuelTypes.find((f) => f.id === ids[0]);
+        if (ft) {
+          form.setValue("fuelTypeId", ft.id);
+          const fp = fuelPrices.find((p) => p.fuelTypeId === ft.id);
+          form.setValue("pricePerLiter", fp?.pricePerLiter ?? ft.pricePerLiter ?? 0);
+        }
+      }
+    }
+  };
 
   // Auto-set price when fuel type changes
   const handleFuelTypeChange = (id) => {
@@ -164,6 +231,7 @@ export default function SalesPage() {
     qc.invalidateQueries({ queryKey: ["sales"] });
     qc.invalidateQueries({ queryKey: ["tanks"] });
     qc.invalidateQueries({ queryKey: ["customers"] });
+    qc.invalidateQueries({ queryKey: ["pumps"] });
   };
 
   const generateId = () => `TXN-${String(sales.length + 1).padStart(3, "0")}`;
@@ -172,17 +240,37 @@ export default function SalesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      // Validate tank stock
-      const tank = tanks.find(
-        (t) => t.fuelTypeId === data.fuelTypeId && t.status === "active",
-      );
-      if (!tank) throw new Error(t("noData"));
+      // Find the pump
+      const pump = pumps.find((p) => p.pumpNumber === data.pumpNumber);
+
+      // Find the tank: use the pump's tankAssignments for the chosen fuel type,
+      // with a legacy tankId fallback, then a broad active-tank search.
+      let tank = null;
+      if (pump) {
+        // New format: per-fuel tankAssignments
+        if (Array.isArray(pump.tankAssignments) && pump.tankAssignments.length > 0) {
+          const assignment = pump.tankAssignments.find((a) => a.fuelTypeId === data.fuelTypeId);
+          if (assignment?.tankId) tank = tanks.find((t) => t.id === assignment.tankId) ?? null;
+        }
+        // Legacy fallback: single tankId
+        if (!tank && pump.tankId) {
+          const candidateTank = tanks.find((t) => t.id === pump.tankId);
+          if (candidateTank && candidateTank.fuelTypeId === data.fuelTypeId) tank = candidateTank;
+        }
+      }
+      // Last resort: any active tank for the fuel type
+      if (!tank) {
+        tank = tanks.find((t) => t.fuelTypeId === data.fuelTypeId && t.status === "active") ?? null;
+      }
+
+      if (!tank) throw new Error(lang === "ps" ? "د دې تیلو لپاره ټانک ونه موندل شو" : "No tank found for the selected fuel type");
+      if (tank.status !== "active") throw new Error(`Tank "${tank.name}" is not active`);
       if (tank.currentStock < (data.liters ?? 0))
-        throw new Error(`Insufficient stock. Available: ${tank.currentStock}L`);
+        throw new Error(`Insufficient stock. Available: ${tank.currentStock}L in ${tank.name}`);
 
       const result = await salesApi.create(data);
 
-      // Deduct from tank
+      // Deduct from the matched tank
       await tanksApi.patch(tank.id, {
         currentStock: tank.currentStock - (data.liters ?? 0),
       });
@@ -228,18 +316,21 @@ export default function SalesPage() {
   });
 
   const openCreate = () => {
+    const firstPump = pumps.find((p) => p.status === "active");
     form.reset({
-      pumpNumber: "P1",
-      fuelTypeId: "",
-      customerType: "cash",
-      customerId: "",
-      customerName: "Walk-in",
-      liters: 0,
-      pricePerLiter: 0,
-      paymentMethod: "cash",
+      pumpNumber:      firstPump?.pumpNumber ?? "",
+      fuelTypeId:      "",
+      customerType:    "cash",
+      customerId:      "",
+      customerName:    "Walk-in",
+      liters:          0,
+      pricePerLiter:   0,
+      paymentMethod:   "cash",
       transactionType: "retail",
-      notes: "",
+      notes:           "",
     });
+    setSellMode("liters");
+    setAmountPaid(0);
     setDialog({ open: true });
   };
 
@@ -256,6 +347,8 @@ export default function SalesPage() {
       transactionType: item.transactionType,
       notes: item.notes,
     });
+    setSellMode("liters");
+    setAmountPaid(0);
     setDialog({ open: true, item });
   };
 
@@ -263,6 +356,10 @@ export default function SalesPage() {
     // Normalize Pashto numerals to ASCII
     values.liters = toArabicNum(values.liters);
     values.pricePerLiter = toArabicNum(values.pricePerLiter);
+    // In "amount" mode override liters with the calculated value
+    if (sellMode === "amount" && calculatedLiters !== null) {
+      values.liters = calculatedLiters;
+    }
     const empId = user?.employeeId
       ? (employees.find((e) => e.employeeId === user.employeeId)?.id ?? "1")
       : "1";
@@ -644,7 +741,7 @@ export default function SalesPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialog.open} onOpenChange={(open) => setDialog({ open })}>
+      <Dialog open={dialog.open} onOpenChange={(open) => { setDialog({ open }); if (!open) { setSellMode("liters"); setAmountPaid(0); } }}>
         <DialogContent className="max-w-[calc(100%-2rem)] md:max-w-lg">
           <DialogHeader>
             <DialogTitle>
@@ -652,7 +749,17 @@ export default function SalesPage() {
             </DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                // In amount mode: inject calculatedLiters into the form BEFORE
+                // Zod validation runs, so the min(0.01) check passes.
+                if (sellMode === "amount" && calculatedLiters !== null && calculatedLiters > 0) {
+                  form.setValue("liters", calculatedLiters, { shouldValidate: false });
+                }
+                form.handleSubmit(onSubmit)(e);
+              }}
+              className="space-y-4"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -660,22 +767,33 @@ export default function SalesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pumpNumber")}</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={handlePumpChange}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder={lang === "ps" ? "پمپ غوره کړئ" : "Select pump"} />
                           </SelectTrigger>
                         </FormControl>
-
                         <SelectContent>
-                          {["P1", "P2", "P3", "P4"].map((p) => (
-                            <SelectItem key={p} value={p}>
-                              {p}
+                          {pumps.filter((p) => p.status === "active").map((p) => (
+                            <SelectItem key={p.id} value={p.pumpNumber} textValue={p.pumpNumber}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{p.pumpNumber} — {p.name}</span>
+                                <span className="text-xs text-muted-foreground">{p.location}</span>
+                              </div>
                             </SelectItem>
                           ))}
+                          {pumps.filter((p) => p.status !== "active").length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                                {lang === "ps" ? "غیرفعال" : "Inactive / Maintenance"}
+                              </div>
+                              {pumps.filter((p) => p.status !== "active").map((p) => (
+                                <SelectItem key={p.id} value={p.pumpNumber} textValue={p.pumpNumber} className="opacity-50">
+                                  {p.pumpNumber} — {p.name}
+                                </SelectItem>
+                              ))}
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -691,17 +809,20 @@ export default function SalesPage() {
                       <Select
                         value={field.value}
                         onValueChange={handleFuelTypeChange}
+                        disabled={!pumpNumber}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={t("selectFuel")} />
+                            <SelectValue placeholder={pumpNumber ? t("selectFuel") : (lang === "ps" ? "لومړی پمپ غوره کړئ" : "Select pump first")} />
                           </SelectTrigger>
                         </FormControl>
-
                         <SelectContent>
-                          {fuelTypes.map((f) => (
-                            <SelectItem key={f.id} value={f.id}>
-                              {f.name}
+                          {allowedFuelTypes.map((f) => (
+                            <SelectItem key={f.id} value={f.id} textValue={f.name}>
+                              <div className="flex items-center gap-2">
+                                <span className="h-2.5 w-2.5 rounded-full" style={{ background: f.color ?? "#94a3b8" }} />
+                                {f.name}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -790,20 +911,79 @@ export default function SalesPage() {
                   />
                 )}
               </div>
+              {/* ── Sell mode toggle ──────────────────────────────────── */}
+              <div className="flex items-center gap-1 rounded-lg border border-input bg-muted/40 p-1">
+                <button
+                  type="button"
+                  onClick={() => { setSellMode("liters"); setAmountPaid(0); }}
+                  className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    sellMode === "liters"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {lang === "ps" ? "د لیتر له مخه" : "By Liters"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSellMode("amount"); form.setValue("liters", 0); }}
+                  className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    sellMode === "amount"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {lang === "ps" ? "د مبلغ له مخه (AFN)" : "By Amount (AFN)"}
+                </button>
+              </div>
+
+              {/* ── Liters / Price row ─────────────────────────────────── */}
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="liters"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("liters")}</FormLabel>
-                      <FormControl>
-                        <PashtoInput type="number" step="0.01" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {sellMode === "liters" ? (
+                  <FormField
+                    control={form.control}
+                    name="liters"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("liters")}</FormLabel>
+                        <FormControl>
+                          <PashtoInput type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  /* Amount paid input */
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none">
+                      {lang === "ps" ? "د مبلغ تادیه (AFN)" : "Amount Paid (AFN)"}
+                      {" "}<span className="text-destructive">*</span>
+                    </label>
+                    <PashtoInput
+                      type="number"
+                      step="0.01"
+                      value={amountPaid || ""}
+                      onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
+                      placeholder="700"
+                    />
+                    {/* Calculated liters preview */}
+                    {pricePerLiter > 0 && amountPaid > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {amountPaid} ÷ {pricePerLiter} ={" "}
+                        <span className="font-semibold text-foreground">
+                          {calculatedLiters}L
+                        </span>
+                      </p>
+                    )}
+                    {amountPaid > 0 && pricePerLiter <= 0 && (
+                      <p className="text-xs text-destructive">
+                        {lang === "ps" ? "لومړی د تیلو ډول غوره کړئ" : "Select a fuel type first to get price"}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <FormField
                   control={form.control}
                   name="pricePerLiter"
@@ -833,21 +1013,83 @@ export default function SalesPage() {
                 />
               </div>
               <div className="rounded-lg bg-muted p-3 text-sm">
-                Total:{" "}
-                <span className="text-base font-bold text-foreground">
-                  {fmtCurrency(totalAmount, lang)}
-                </span>
-                {fuelTypeId && (
-                  <span className="ml-4 text-muted-foreground">
-                    Tank stock:{" "}
-                    {tanks
-                      .find(
-                        (t) =>
-                          t.fuelTypeId === fuelTypeId && t.status === "active",
-                      )
-                      ?.currentStock.toLocaleString() ?? 0}
-                    L available
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* Total amount */}
+                  <span>
+                    {lang === "ps" ? "ټوله مبلغ:" : "Total:"}{"  "}
+                    <span className="text-base font-bold text-foreground">
+                      {fmtCurrency(totalAmount, lang)}
+                    </span>
+                    {sellMode === "amount" && calculatedLiters !== null && calculatedLiters > 0 && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        = <span className="font-semibold text-foreground">{calculatedLiters}L</span>
+                      </span>
+                    )}
                   </span>
+
+                  {/* Fuel type pill */}
+                  {selectedFuelType && (
+                    <span className="flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium">
+                      <span className="h-2 w-2 rounded-full" style={{ background: selectedFuelType.color ?? "#94a3b8" }} />
+                      {selectedFuelType.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Pump → Tank → Available stock */}
+                {selectedPump && (
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/60 pt-2 text-xs text-muted-foreground">
+                    {/* Pump */}
+                    <span className="flex items-center gap-1">
+                      <span className="font-semibold text-foreground">{selectedPump.pumpNumber}</span>
+                      {selectedPump.name !== selectedPump.pumpNumber && (
+                        <span>— {selectedPump.name}</span>
+                      )}
+                    </span>
+
+                    {assignedTank ? (
+                      <>
+                        <span className="text-border">→</span>
+                        {/* Tank name */}
+                        <span className={assignedTank.status !== "active" ? "font-semibold text-amber-600 dark:text-amber-400" : "font-medium text-foreground"}>
+                          {assignedTank.name}
+                          {assignedTank.status !== "active" && (
+                            <span className="ml-1 text-amber-600 dark:text-amber-400">
+                              ({lang === "ps" ? "غیر فعال" : "inactive"})
+                            </span>
+                          )}
+                        </span>
+                        {/* Available stock */}
+                        <span className="text-border">·</span>
+                        <span className={
+                          assignedTank.status !== "active"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : assignedTank.currentStock < assignedTank.minimumLevel
+                              ? "font-semibold text-destructive"
+                              : "text-foreground"
+                        }>
+                          {lang === "ps" ? "موجود:" : "Available:"}{"  "}
+                          <span className="font-bold">{assignedTank.currentStock.toLocaleString()}L</span>
+                          {assignedTank.currentStock < assignedTank.minimumLevel && (
+                            <span className="ml-1 text-destructive">⚠ {lang === "ps" ? "کم ذخیره" : "low"}</span>
+                          )}
+                        </span>
+                        {/* Warn if liters requested exceeds stock */}
+                        {(sellMode === "amount" ? (calculatedLiters ?? 0) : (liters || 0)) > assignedTank.currentStock && (
+                          <span className="font-semibold text-destructive">
+                            ⛽ {lang === "ps" ? "د ذخیرې نه ډیر" : "Exceeds available stock"}
+                          </span>
+                        )}
+                      </>
+                    ) : fuelTypeId ? (
+                      <>
+                        <span className="text-border">→</span>
+                        <span className="text-destructive">
+                          {lang === "ps" ? "هیڅ ټانک ندی ټاکل شوی" : "No tank assigned for this fuel type"}
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -916,7 +1158,8 @@ export default function SalesPage() {
                 <Button
                   type="submit"
                   disabled={
-                    createMutation.isPending || updateMutation.isPending
+                    createMutation.isPending || updateMutation.isPending ||
+                    (sellMode === "amount" && (amountPaid <= 0 || pricePerLiter <= 0 || !calculatedLiters))
                   }
                 >
                   {dialog.item ? t("update") : t("recordSale")}
