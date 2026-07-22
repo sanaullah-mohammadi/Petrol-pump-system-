@@ -92,7 +92,7 @@ function generatePaymentId(payments) {
 function StatCard({ icon: Icon, label, value, sub, color, bg, accent }) {
   return (
     <Card className={`h-full border-l-4 ${accent ?? "border-l-primary"}`}>
-      <CardContent className="p-4 md:p-5">
+      <CardContent className="px-5 pb-5 pt-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-muted-foreground">{label}</p>
@@ -581,31 +581,26 @@ export default function CustomersPage() {
                           </td>
                           <td className="py-3 pe-3 text-end">
                             <div className="flex items-center justify-end gap-1">
-                              {/* Account statement */}
                               <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setStatementDialog({ open: true, customer: c }); }}
                                 className="h-8 w-8 p-0" title={t("accountStatement")}>
                                 <FiFileText className="h-3.5 w-3.5" />
                               </Button>
-                              {/* Payment history */}
                               <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryDialog({ open: true, customer: c }); }}
                                 className="h-8 w-8 p-0" title={t("paymentHistory")}>
                                 <FiClock className="h-3.5 w-3.5" />
                               </Button>
-                              {/* Record payment — credit customers only, Admin/Manager */}
                               {canWrite && c.type === "credit" && (
                                 <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openPayDialog(c); }}
                                   className="h-8 w-8 p-0 text-green-600 hover:text-green-600" title={t("recordPaymentFor")}>
                                   <FiDollarSign className="h-3.5 w-3.5" />
                                 </Button>
                               )}
-                              {/* Edit */}
                               {canWrite && (
                                 <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(c); }}
                                   className="h-8 w-8 p-0" title={t("edit")}>
                                   <FiEdit2 className="h-3.5 w-3.5" />
                                 </Button>
                               )}
-                              {/* Delete */}
                               {canWrite && (
                                 <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteClick(c.id); }}
                                   className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("delete")}>

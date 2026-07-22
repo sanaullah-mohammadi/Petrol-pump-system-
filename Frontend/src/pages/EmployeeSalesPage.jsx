@@ -38,15 +38,15 @@ import {
 function StatCard({ label, value, color, bg, accent, icon: Icon }) {
   return (
     <Card className={`h-full border-l-4 ${accent ?? "border-l-primary"}`}>
-      <CardContent className="p-4 md:p-5">
-        <div className="flex items-start justify-between">
-          <div>
+      <CardContent className="px-5 pb-5 pt-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-muted-foreground">{label}</p>
-            <p className={`mt-1 text-xl font-bold ${color ?? "text-foreground"}`}>{value}</p>
+            <p className={`mt-1 text-xl font-bold leading-tight ${color ?? "text-foreground"}`}>{value}</p>
           </div>
           {Icon && (
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${bg ?? "bg-primary/10"}`}>
-              <Icon className={`h-5 w-5 ${color ?? "text-primary"}`} />
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10 ${bg ?? "bg-primary/10"}`}>
+              <Icon className={`h-4 w-4 md:h-5 md:w-5 ${color ?? "text-primary"}`} />
             </div>
           )}
         </div>
@@ -142,49 +142,93 @@ export default function EmployeeSalesPage() {
 
         {/* ── Filters ──────────────────────────────────────────────────────── */}
         <Card>
-          <CardContent className="flex flex-wrap items-end gap-3 p-4 pt-5">
-            {/* Employee selector — admin/manager only */}
-            {canSeeAll && (
-              <div className="flex min-w-[180px] flex-1 flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">{t("employeeName")}</label>
-                <Select value={selectedEmpId} onValueChange={setSelectedEmpId}>
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue placeholder={lang === "ps" ? "ټول کارمندان" : "All Employees"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" textValue={lang === "ps" ? "ټول کارمندان" : "All Employees"}>
-                      {lang === "ps" ? "ټول کارمندان" : "All Employees"}
-                    </SelectItem>
-                    {activeEmployees.map((e) => (
-                      <SelectItem key={e.id} value={e.id} textValue={e.fullName}>
-                        {e.fullName}
-                        <span className="ms-1 text-xs capitalize text-muted-foreground">({e.role})</span>
+          <CardContent className="p-4 pt-5">
+
+            {/* ── Desktop: everything in one row ──────────────────────── */}
+            <div className="hidden md:flex md:flex-wrap md:items-end md:gap-3">
+              {canSeeAll && (
+                <div className="flex min-w-[180px] flex-1 flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">{t("employeeName")}</label>
+                  <Select value={selectedEmpId} onValueChange={setSelectedEmpId}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder={lang === "ps" ? "ټول کارمندان" : "All Employees"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" textValue={lang === "ps" ? "ټول کارمندان" : "All Employees"}>
+                        {lang === "ps" ? "ټول کارمندان" : "All Employees"}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      {activeEmployees.map((e) => (
+                        <SelectItem key={e.id} value={e.id} textValue={e.fullName}>
+                          {e.fullName}
+                          <span className="ms-1 text-xs capitalize text-muted-foreground">({e.role})</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "له" : "From"}</label>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-38 text-sm" />
               </div>
-            )}
-
-            {/* Date from */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "له" : "From"}</label>
-              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-38 text-sm" />
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "تر" : "To"}</label>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-38 text-sm" />
+              </div>
+              {(dateFrom || dateTo || selectedEmpId !== "all") && (
+                <Button variant="ghost" size="sm" className="h-8 self-end"
+                  onClick={() => { setDateFrom(""); setDateTo(""); setSelectedEmpId("all"); }}>
+                  {lang === "ps" ? "پاکول" : "Clear"}
+                </Button>
+              )}
             </div>
 
-            {/* Date to */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "تر" : "To"}</label>
-              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-38 text-sm" />
+            {/* ── Mobile: line 1 = employee selector, line 2 = date range ── */}
+            <div className="flex flex-col gap-2 md:hidden">
+
+              {/* Row 1: employee selector (full width) */}
+              {canSeeAll && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">{t("employeeName")}</label>
+                  <Select value={selectedEmpId} onValueChange={setSelectedEmpId}>
+                    <SelectTrigger className="h-8 w-full text-sm">
+                      <SelectValue placeholder={lang === "ps" ? "ټول کارمندان" : "All Employees"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" textValue={lang === "ps" ? "ټول کارمندان" : "All Employees"}>
+                        {lang === "ps" ? "ټول کارمندان" : "All Employees"}
+                      </SelectItem>
+                      {activeEmployees.map((e) => (
+                        <SelectItem key={e.id} value={e.id} textValue={e.fullName}>
+                          {e.fullName}
+                          <span className="ms-1 text-xs capitalize text-muted-foreground">({e.role})</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Row 2: From / To dates side by side */}
+              <div className="flex items-end gap-2">
+                <div className="flex flex-1 flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "له" : "From"}</label>
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-full text-sm" />
+                </div>
+                <div className="flex flex-1 flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "تر" : "To"}</label>
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-full text-sm" />
+                </div>
+                {(dateFrom || dateTo || selectedEmpId !== "all") && (
+                  <Button variant="ghost" size="sm" className="h-8 shrink-0 self-end"
+                    onClick={() => { setDateFrom(""); setDateTo(""); setSelectedEmpId("all"); }}>
+                    {lang === "ps" ? "پاکول" : "Clear"}
+                  </Button>
+                )}
+              </div>
+
             </div>
 
-            {/* Clear */}
-            {(dateFrom || dateTo || selectedEmpId !== "all") && (
-              <Button variant="ghost" size="sm" className="h-8 self-end"
-                onClick={() => { setDateFrom(""); setDateTo(""); setSelectedEmpId("all"); }}>
-                {lang === "ps" ? "پاکول" : "Clear"}
-              </Button>
-            )}
           </CardContent>
         </Card>
 

@@ -90,33 +90,33 @@ function getExpTypeMeta(type) {
 function KPICard({ title, value, sub, icon: Icon, trend, trendLabel, color, accent }) {
   return (
     <Card className={`h-full border-l-4 ${accent ?? "border-l-primary"}`}>
-      <CardContent className="p-4 md:p-5">
-        <div className="flex items-start justify-between">
-          <div className="min-w-0">
-            <p className="text-pretty text-sm text-muted-foreground">{title}</p>
-            <p className="mt-1 text-balance text-2xl font-bold text-foreground">
+      <CardContent className="px-4 pb-4 pt-5 md:px-5 md:pb-5 md:pt-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-muted-foreground leading-tight">{title}</p>
+            <p className="mt-1 text-xl font-bold text-foreground leading-tight break-words">
               {value}
             </p>
             {sub && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground line-clamp-2">{sub}</p>
             )}
             {trendLabel && (
               <div
-                className={`mt-1.5 flex items-center gap-1 text-xs font-medium ${trend === "up" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                className={`mt-1.5 flex items-center gap-1 text-[11px] font-medium ${trend === "up" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
               >
                 {trend === "up" ? (
-                  <FiTrendingUp className="h-3 w-3" />
+                  <FiTrendingUp className="h-3 w-3 shrink-0" />
                 ) : (
-                  <FiTrendingDown className="h-3 w-3" />
+                  <FiTrendingDown className="h-3 w-3 shrink-0" />
                 )}
-                {trendLabel}
+                <span className="truncate">{trendLabel}</span>
               </div>
             )}
           </div>
           <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color}`}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10 ${color}`}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className="h-4 w-4 md:h-5 md:w-5" />
           </div>
         </div>
       </CardContent>
@@ -426,7 +426,7 @@ export default function DashboardPage() {
         )}
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {/* 1. Today's Revenue */}
           <KPICard
             title={t("todayRevenue")}
@@ -479,7 +479,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Second row KPIs */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <KPICard
             title={t("totalSales")}
             value={fmtCurrency(totalRevenue, lang)}
@@ -545,55 +545,78 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full whitespace-nowrap">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                              {lang === "ps" ? "لګښت" : "Expense"}
-                            </th>
-                            <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                              {lang === "ps" ? "ډول" : "Category"}
-                            </th>
-                            <th className="px-4 py-2.5 text-right text-xs font-semibold text-muted-foreground">
-                              {lang === "ps" ? "مبلغ (AFN)" : "Amount (AFN)"}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {recentExpenses.map((exp) => {
-                            const meta = getExpTypeMeta(exp.type);
-                            const Icon = meta.icon;
-                            return (
-                              <tr key={exp.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
-                                <td className="px-4 py-2.5">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${meta.bg}`}>
-                                      <Icon className={`h-3.5 w-3.5 ${meta.color}`} />
+                    <>
+                      {/* Mobile */}
+                      <div className="divide-y divide-border md:hidden">
+                        {recentExpenses.map((exp) => {
+                          const meta = getExpTypeMeta(exp.type);
+                          const Icon = meta.icon;
+                          return (
+                            <div key={exp.id} className="flex items-center gap-3 px-4 py-3">
+                              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${meta.bg}`}>
+                                <Icon className={`h-3.5 w-3.5 ${meta.color}`} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm">{exp.description || exp.type}</p>
+                                <p className="text-xs text-muted-foreground">{exp.type}</p>
+                              </div>
+                              <span className="shrink-0 text-sm font-semibold">
+                                {(exp.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        <div className="flex items-center justify-between border-t-2 border-border bg-muted/20 px-4 py-2.5">
+                          <span className="text-sm font-bold">{lang === "ps" ? "ټول" : "Total"}</span>
+                          <span className="text-sm font-bold">
+                            {recentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Desktop */}
+                      <div className="hidden overflow-x-auto md:block">
+                        <table className="w-full whitespace-nowrap">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">{lang === "ps" ? "لګښت" : "Expense"}</th>
+                              <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">{lang === "ps" ? "ډول" : "Category"}</th>
+                              <th className="px-4 py-2.5 text-right text-xs font-semibold text-muted-foreground">{lang === "ps" ? "مبلغ (AFN)" : "Amount (AFN)"}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {recentExpenses.map((exp) => {
+                              const meta = getExpTypeMeta(exp.type);
+                              const Icon = meta.icon;
+                              return (
+                                <tr key={exp.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
+                                  <td className="px-4 py-2.5">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${meta.bg}`}>
+                                        <Icon className={`h-3.5 w-3.5 ${meta.color}`} />
+                                      </div>
+                                      <span className="text-sm">{exp.description || exp.type}</span>
                                     </div>
-                                    <span className="text-sm">{exp.description || exp.type}</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-2.5 text-sm text-muted-foreground">{exp.type}</td>
-                                <td className="px-4 py-2.5 text-right text-sm font-semibold">
-                                  {(exp.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                        <tfoot>
-                          <tr className="border-t-2 border-border bg-muted/20">
-                            <td colSpan={2} className="px-4 py-2.5 text-sm font-bold">
-                              {lang === "ps" ? "ټول" : "Total"}
-                            </td>
-                            <td className="px-4 py-2.5 text-right text-sm font-bold">
-                              {recentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
+                                  </td>
+                                  <td className="px-4 py-2.5 text-sm text-muted-foreground">{exp.type}</td>
+                                  <td className="px-4 py-2.5 text-right text-sm font-semibold">
+                                    {(exp.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot>
+                            <tr className="border-t-2 border-border bg-muted/20">
+                              <td colSpan={2} className="px-4 py-2.5 text-sm font-bold">{lang === "ps" ? "ټول" : "Total"}</td>
+                              <td className="px-4 py-2.5 text-right text-sm font-bold">
+                                {recentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>
@@ -862,15 +885,15 @@ export default function DashboardPage() {
             </div>
 
             {/* Period toggle + custom date range */}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {/* Period buttons */}
-              <div className="flex rounded-lg border border-input bg-muted/40 p-0.5 gap-0.5">
+            <div className="mt-3 space-y-2">
+              {/* Period buttons — horizontally scrollable on mobile */}
+              <div className="flex overflow-x-auto rounded-lg border border-input bg-muted/40 p-0.5 gap-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {PERIOD_LABELS.map((p) => (
                   <button
                     key={p.key}
                     type="button"
                     onClick={() => setPerfPeriod(p.key)}
-                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                    className={`shrink-0 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                       perfPeriod === p.key
                         ? "bg-background text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
@@ -881,9 +904,9 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Custom date pickers — shown only when custom is selected */}
+              {/* Custom date pickers — 2-col grid on mobile */}
               {perfPeriod === "custom" && (
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[10px] text-muted-foreground">
                       {lang === "ps" ? "له" : "From"}
@@ -892,7 +915,7 @@ export default function DashboardPage() {
                       type="date"
                       value={perfFrom}
                       onChange={(e) => setPerfFrom(e.target.value)}
-                      className="h-8 w-36 text-xs"
+                      className="h-8 text-xs"
                     />
                   </div>
                   <div className="flex flex-col gap-0.5">
@@ -903,7 +926,7 @@ export default function DashboardPage() {
                       type="date"
                       value={perfTo}
                       onChange={(e) => setPerfTo(e.target.value)}
-                      className="h-8 w-36 text-xs"
+                      className="h-8 text-xs"
                     />
                   </div>
                 </div>
@@ -931,99 +954,50 @@ export default function DashboardPage() {
                         lang === "ps" ? "خالص ګټه"      : "Net Profit (AFN)",
                         lang === "ps" ? "حاشیه"         : "Margin",
                       ].map((h) => (
-                        <th
-                          key={h}
-                          className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground first:pl-4"
-                        >
+                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground first:pl-4">
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
-
                   <tbody>
                     {perfRows.map(({ ft, litres, revenue, fuelCost, grossProfit, netProfit, margin }) => (
-                      <tr
-                        key={ft.id}
-                        className="border-b border-border transition-colors last:border-0 hover:bg-muted/30"
-                      >
-                        {/* Fuel type */}
+                      <tr key={ft.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span
-                              className="h-3 w-3 shrink-0 rounded-full"
-                              style={{ background: ft.color ?? "#94a3b8" }}
-                            />
+                            <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
                             <span className="text-sm font-medium">{ft.name}</span>
                           </div>
                         </td>
-                        {/* Litres */}
-                        <td className="px-4 py-3 text-sm">
-                          {litres.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L
-                        </td>
-                        {/* Revenue */}
-                        <td className="px-4 py-3 text-sm font-medium">
-                          {fmtCurrency(revenue, lang)}
-                        </td>
-                        {/* Fuel Cost */}
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {fmtCurrency(fuelCost, lang)}
-                        </td>
-                        {/* Gross Profit */}
-                        <td className={`px-4 py-3 text-sm font-medium ${grossProfit >= 0 ? "text-foreground" : "text-destructive"}`}>
-                          {fmtCurrency(grossProfit, lang)}
-                        </td>
-                        {/* Net Profit */}
-                        <td className={`px-4 py-3 text-sm font-medium ${netProfit >= 0 ? "text-foreground" : "text-destructive"}`}>
-                          {fmtCurrency(netProfit, lang)}
-                        </td>
-                        {/* Margin */}
+                        <td className="px-4 py-3 text-sm">{litres.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
+                        <td className="px-4 py-3 text-sm font-medium">{fmtCurrency(revenue, lang)}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{fmtCurrency(fuelCost, lang)}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${grossProfit >= 0 ? "text-foreground" : "text-destructive"}`}>{fmtCurrency(grossProfit, lang)}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${netProfit >= 0 ? "text-foreground" : "text-destructive"}`}>{fmtCurrency(netProfit, lang)}</td>
                         <td className="px-4 py-3">
                           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            margin >= 15
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : margin >= 5
-                                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          }`}>
-                            {margin.toFixed(2)}%
-                          </span>
+                            margin >= 15 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : margin >= 5 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          }`}>{margin.toFixed(2)}%</span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-
-                  {/* Totals row */}
                   <tfoot>
                     <tr className="border-t-2 border-border bg-muted/40">
-                      <td className="px-4 py-3 text-sm font-bold">
-                        {lang === "ps" ? "ټول" : "Total"}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-bold">
-                        {perfTotals.litres.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L
-                      </td>
-                      <td className="px-4 py-3 text-sm font-bold">
-                        {fmtCurrency(perfTotals.revenue, lang)}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-bold text-muted-foreground">
-                        {fmtCurrency(perfTotals.fuelCost, lang)}
-                      </td>
-                      <td className={`px-4 py-3 text-sm font-bold ${perfTotals.grossProfit >= 0 ? "" : "text-destructive"}`}>
-                        {fmtCurrency(perfTotals.grossProfit, lang)}
-                      </td>
-                      <td className={`px-4 py-3 text-sm font-bold ${perfTotals.netProfit >= 0 ? "" : "text-destructive"}`}>
-                        {fmtCurrency(perfTotals.netProfit, lang)}
-                      </td>
+                      <td className="px-4 py-3 text-sm font-bold">{lang === "ps" ? "ټول" : "Total"}</td>
+                      <td className="px-4 py-3 text-sm font-bold">{perfTotals.litres.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
+                      <td className="px-4 py-3 text-sm font-bold">{fmtCurrency(perfTotals.revenue, lang)}</td>
+                      <td className="px-4 py-3 text-sm font-bold text-muted-foreground">{fmtCurrency(perfTotals.fuelCost, lang)}</td>
+                      <td className={`px-4 py-3 text-sm font-bold ${perfTotals.grossProfit >= 0 ? "" : "text-destructive"}`}>{fmtCurrency(perfTotals.grossProfit, lang)}</td>
+                      <td className={`px-4 py-3 text-sm font-bold ${perfTotals.netProfit >= 0 ? "" : "text-destructive"}`}>{fmtCurrency(perfTotals.netProfit, lang)}</td>
                       <td className="px-4 py-3">
                         <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                          perfTotalMargin >= 15
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : perfTotalMargin >= 5
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}>
-                          {perfTotalMargin.toFixed(2)}%
-                        </span>
+                          perfTotalMargin >= 15 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : perfTotalMargin >= 5 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}>{perfTotalMargin.toFixed(2)}%</span>
                       </td>
                     </tr>
                   </tfoot>
@@ -1045,68 +1019,34 @@ export default function DashboardPage() {
               <table className="w-full whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="py-2 pr-4 text-left text-xs font-medium text-muted-foreground">
-                      {t("transactionId")}
-                    </th>
-                    <th className="py-2 pr-4 text-left text-xs font-medium text-muted-foreground">
-                      {t("customer")}
-                    </th>
-                    <th className="py-2 pr-4 text-left text-xs font-medium text-muted-foreground">
-                      {t("fuel")}
-                    </th>
-                    <th className="py-2 pr-4 text-right text-xs font-medium text-muted-foreground">
-                      {t("liters")}
-                    </th>
-                    <th className="py-2 pr-4 text-right text-xs font-medium text-muted-foreground">
-                      {t("amount")}
-                    </th>
-                    <th className="py-2 text-left text-xs font-medium text-muted-foreground">
-                      {t("method")}
-                    </th>
+                    <th className="py-2 pr-4 ps-4 text-left text-xs font-medium text-muted-foreground">{t("transactionId")}</th>
+                    <th className="py-2 pr-4 text-left text-xs font-medium text-muted-foreground">{t("customer")}</th>
+                    <th className="py-2 pr-4 text-left text-xs font-medium text-muted-foreground">{t("fuel")}</th>
+                    <th className="py-2 pr-4 text-right text-xs font-medium text-muted-foreground">{t("liters")}</th>
+                    <th className="py-2 pr-4 text-right text-xs font-medium text-muted-foreground">{t("amount")}</th>
+                    <th className="py-2 pe-4 text-left text-xs font-medium text-muted-foreground">{t("method")}</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {[...sales]
-                    .sort(
-                      (a, b) =>
-                        new Date(b.date).getTime() - new Date(a.date).getTime(),
-                    )
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     .slice(0, 6)
                     .map((sale) => {
-                      const ft = fuelTypes.find(
-                        (f) => f.id === sale.fuelTypeId,
-                      );
+                      const ft = fuelTypes.find((f) => f.id === sale.fuelTypeId);
                       return (
-                        <tr
-                          key={sale.id}
-                          className="border-b border-border transition-colors last:border-0 hover:bg-muted/30"
-                        >
-                          <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">
-                            {sale.transactionId}
-                          </td>
-                          <td className="py-2 pr-4 text-sm">
-                            {sale.customerName}
-                          </td>
-                          <td className="py-2 pr-4">
+                        <tr key={sale.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
+                          <td className="py-2.5 pr-4 ps-4 font-mono text-xs text-muted-foreground">{sale.transactionId}</td>
+                          <td className="py-2.5 pr-4 text-sm">{sale.customerName}</td>
+                          <td className="py-2.5 pr-4">
                             <span className="inline-flex items-center gap-1 text-xs">
-                              <span
-                                className="h-2 w-2 rounded-full"
-                                style={{ background: ft?.color }}
-                              />
+                              <span className="h-2 w-2 rounded-full" style={{ background: ft?.color }} />
                               {ft?.name}
                             </span>
                           </td>
-                          <td className="py-2 pr-4 text-right text-sm">
-                            {sale.liters}L
-                          </td>
-                          <td className="py-2 pr-4 text-right text-sm font-semibold">
-                            {fmtCurrency(sale.totalAmount, lang)}
-                          </td>
-                          <td className="py-2 text-xs capitalize">
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                              {sale.paymentMethod}
-                            </span>
+                          <td className="py-2.5 pr-4 text-right text-sm">{sale.liters}L</td>
+                          <td className="py-2.5 pr-4 text-right text-sm font-semibold">{fmtCurrency(sale.totalAmount, lang)}</td>
+                          <td className="py-2.5 pe-4 text-xs capitalize">
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{sale.paymentMethod}</span>
                           </td>
                         </tr>
                       );

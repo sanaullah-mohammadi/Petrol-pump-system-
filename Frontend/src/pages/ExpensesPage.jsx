@@ -241,7 +241,7 @@ export default function ExpensesPage() {
             const accentMap = { "Electricity": "border-l-yellow-500", "Salaries": "border-l-blue-500", "Rent": "border-l-purple-500", "Internet": "border-l-cyan-500", "Internet & Phone": "border-l-cyan-500", "Maintenance": "border-l-orange-500", "Transport": "border-l-green-500", "IT / Software": "border-l-indigo-500", "Security": "border-l-red-500", "Office Supplies": "border-l-teal-500", "Other": "border-l-slate-400" };
             return (
               <Card key={item.type} className={`h-full border-l-4 ${accentMap[item.type] ?? "border-l-slate-400"}`}>
-                <CardContent className="p-4 md:p-5">
+                <CardContent className="px-5 pb-5 pt-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground">{item.type}</p>
@@ -277,51 +277,82 @@ export default function ExpensesPage() {
               )}
             </div>
 
-            {/* ── Filters — same pattern as CashHandoversPage ───────── */}
-            <div className="mt-3 flex flex-wrap items-end gap-2">
-              {/* Search */}
-              <div className="relative min-w-[160px] flex-1">
-                <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={lang === "ps" ? "ID / ډول / مبلغ..." : "ID / type / amount..."}
-                  className="h-8 ps-8 text-sm"
-                />
+            {/* ── Filters — same pattern as Fuel Sales ─────────────── */}
+            <div className="mt-3">
+
+              {/* Desktop: single row */}
+              <div className="hidden md:flex md:flex-wrap md:items-end md:gap-2">
+                <div className="relative min-w-[180px] flex-1">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={lang === "ps" ? "ID / ډول / مبلغ..." : "ID / type / amount..."}
+                    className="h-8 ps-8 text-sm" />
+                </div>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="h-8 w-[150px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{lang === "ps" ? "ټول ډولونه" : "All Types"}</SelectItem>
+                    {EXPENSE_TYPE_KEYS.map((ek) => (
+                      <SelectItem key={ek} value={ek}>{ek}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                  <Input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                  <Input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                {(search || filterType !== "all" || filterFrom || filterTo) && (
+                  <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
+                    onClick={() => { setSearch(""); setFilterType("all"); setFilterFrom(""); setFilterTo(""); }}>
+                    {lang === "ps" ? "پاکول" : "Clear"}
+                  </Button>
+                )}
               </div>
 
-              {/* Type filter */}
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="h-8 w-[150px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{lang === "ps" ? "ټول ډولونه" : "All Types"}</SelectItem>
-                  {EXPENSE_TYPE_KEYS.map((ek) => (
-                    <SelectItem key={ek} value={ek}>{ek}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Mobile: search full-width + type full-width + From/To side-by-side */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {/* Row 1: search */}
+                <div className="relative w-full">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={lang === "ps" ? "ID / ډول / مبلغ..." : "ID / type / amount..."}
+                    className="h-8 ps-8 text-sm" />
+                </div>
 
-              {/* Date from */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
-                <Input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 w-36 text-sm" />
+                {/* Row 2: type selector full-width */}
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="h-8 w-full text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{lang === "ps" ? "ټول ډولونه" : "All Types"}</SelectItem>
+                    {EXPENSE_TYPE_KEYS.map((ek) => (
+                      <SelectItem key={ek} value={ek}>{ek}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Row 3: From / To side-by-side */}
+                <div className="flex items-end gap-2">
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                    <Input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 w-full text-sm" />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                    <Input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 w-full text-sm" />
+                  </div>
+                  {(search || filterType !== "all" || filterFrom || filterTo) && (
+                    <Button variant="ghost" size="sm" className="h-8 shrink-0 self-end text-xs"
+                      onClick={() => { setSearch(""); setFilterType("all"); setFilterFrom(""); setFilterTo(""); }}>
+                      {lang === "ps" ? "پاکول" : "Clear"}
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              {/* Date to */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
-                <Input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 w-36 text-sm" />
-              </div>
-
-              {/* Clear */}
-              {(search || filterType !== "all" || filterFrom || filterTo) && (
-                <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
-                  onClick={() => { setSearch(""); setFilterType("all"); setFilterFrom(""); setFilterTo(""); }}>
-                  {lang === "ps" ? "پاکول" : "Clear"}
-                </Button>
-              )}
             </div>
           </CardHeader>
 

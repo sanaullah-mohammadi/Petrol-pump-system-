@@ -107,19 +107,19 @@ const schema = z.object({
 });
 
 // ── Summary stat card (KPICard style) ────────────────────────────────────────
-function StatCard({ label, value, sub, color, accent, iconBg, icon: Icon }) {
+function StatCard({ label, value, sub, color, accent, iconBg, icon: Icon, className }) {
   return (
-    <Card className={`h-full border-l-4 ${accent ?? "border-l-primary"}`}>
-      <CardContent className="p-4 md:p-5">
-        <div className="flex items-start justify-between">
-          <div className="min-w-0">
+    <Card className={`h-full border-l-4 ${accent ?? "border-l-primary"} ${className ?? ""}`}>
+      <CardContent className="px-5 pb-5 pt-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-muted-foreground">{label}</p>
-            <p className={`mt-1 text-2xl font-bold ${color ?? "text-foreground"}`}>{value}</p>
+            <p className={`mt-1 text-xl font-bold leading-tight ${color ?? "text-foreground"}`}>{value}</p>
             {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
           </div>
           {Icon && (
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
-              <Icon className={`h-5 w-5 ${color}`} />
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10 ${iconBg}`}>
+              <Icon className={`h-4 w-4 md:h-5 md:w-5 ${color}`} />
             </div>
           )}
         </div>
@@ -334,6 +334,7 @@ export default function FuelTypesPage() {
             accent="border-l-slate-400"
             iconBg="bg-muted"
             icon={FiXCircle}
+            className="col-span-2 sm:col-span-1"
           />
         </div>
 

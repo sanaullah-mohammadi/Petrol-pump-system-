@@ -263,7 +263,7 @@ export default function PurchasesPage() {
         {/* ── Summary stat cards ─────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Card className="h-full border-l-4 border-l-primary">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول لګښت" : "Total Spend"}</p>
@@ -277,7 +277,7 @@ export default function PurchasesPage() {
             </CardContent>
           </Card>
           <Card className="h-full border-l-4 border-l-destructive">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "پاتې / نه‌تادیه" : "Unpaid / Partial"}</p>
@@ -291,7 +291,7 @@ export default function PurchasesPage() {
             </CardContent>
           </Card>
           <Card className="col-span-2 h-full border-l-4 border-l-orange-500 sm:col-span-1">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول لیتر پیرودل شوی" : "Total Liters Purchased"}</p>
@@ -323,96 +323,102 @@ export default function PurchasesPage() {
             </div>
 
             {/* ── Filter bar ──────────────────────────────────────────── */}
-            <div className="mt-3 flex flex-wrap items-end gap-2">
+            <div className="mt-3">
 
-              {/* Search — supplier name or purchase ID */}
-              <div className="relative min-w-[160px] flex-1">
-                <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={`${t("supplier")} / ID...`}
-                  className="h-8 ps-8 text-sm"
-                />
+              {/* Desktop: single row */}
+              <div className="hidden md:flex md:flex-wrap md:items-end md:gap-2">
+                <div className="relative min-w-[180px] flex-1">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={`${t("supplier")} / ID...`} className="h-8 ps-8 text-sm" />
+                </div>
+                <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                  <SelectTrigger className="h-8 w-[120px] text-sm"><SelectValue placeholder={t("fuel")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")}</SelectItem>
+                    {fuelTypes.map((ft) => (
+                      <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
+                          {ft.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                  <SelectTrigger className="h-8 w-[110px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")}</SelectItem>
+                    <SelectItem value="paid">{t("paid")}</SelectItem>
+                    <SelectItem value="partial">{t("partial")}</SelectItem>
+                    <SelectItem value="unpaid">{t("unpaid")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
+                    onClick={() => { setSearch(""); setFuelFilter("all"); setPaymentFilter("all"); setDateFrom(""); setDateTo(""); }}>
+                    {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                  </Button>
+                )}
               </div>
 
-              {/* Fuel type filter */}
-              <Select value={fuelFilter} onValueChange={setFuelFilter}>
-                <SelectTrigger className="h-8 w-[140px] text-sm">
-                  <SelectValue placeholder={t("fuel")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
-                  {fuelTypes.map((ft) => (
-                    <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ background: ft.color ?? "#94a3b8" }}
-                        />
-                        {ft.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Payment status filter */}
-              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                <SelectTrigger className="h-8 w-[130px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")}</SelectItem>
-                  <SelectItem value="paid">{t("paid")}</SelectItem>
-                  <SelectItem value="partial">{t("partial")}</SelectItem>
-                  <SelectItem value="unpaid">{t("unpaid")}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Date from */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">
-                  {lang === "ps" ? "له" : "From"}
-                </span>
-                <Input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-8 w-36 text-sm"
-                />
+              {/* Mobile: search full-width + 2-col grid */}
+              <div className="flex flex-col gap-2 md:hidden">
+                <div className="relative w-full">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={`${t("supplier")} / ID...`} className="h-8 ps-8 text-sm" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder={t("fuel")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")}</SelectItem>
+                      {fuelTypes.map((ft) => (
+                        <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
+                            {ft.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")}</SelectItem>
+                      <SelectItem value="paid">{t("paid")}</SelectItem>
+                      <SelectItem value="partial">{t("partial")}</SelectItem>
+                      <SelectItem value="unpaid">{t("unpaid")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                    <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                    <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                </div>
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 w-fit text-xs"
+                    onClick={() => { setSearch(""); setFuelFilter("all"); setPaymentFilter("all"); setDateFrom(""); setDateTo(""); }}>
+                    {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                  </Button>
+                )}
               </div>
 
-              {/* Date to */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">
-                  {lang === "ps" ? "تر" : "To"}
-                </span>
-                <Input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-8 w-36 text-sm"
-                />
-              </div>
-
-              {/* Clear all filters */}
-              {hasFilter && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 self-end text-xs"
-                  onClick={() => {
-                    setSearch("");
-                    setFuelFilter("all");
-                    setPaymentFilter("all");
-                    setDateFrom("");
-                    setDateTo("");
-                  }}
-                >
-                  {lang === "ps" ? "پاکول ×" : "Clear ×"}
-                </Button>
-              )}
             </div>
           </CardHeader>
 

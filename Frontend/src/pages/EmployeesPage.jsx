@@ -322,7 +322,7 @@ export default function EmployeesPage() {
         {/* ── Summary stat cards ───────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card className="h-full border-l-4 border-l-primary">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول کارمندان" : "Total Employees"}</p>
@@ -335,7 +335,7 @@ export default function EmployeesPage() {
             </CardContent>
           </Card>
           <Card className="h-full border-l-4 border-l-green-500">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("active")}</p>
@@ -348,7 +348,7 @@ export default function EmployeesPage() {
             </CardContent>
           </Card>
           <Card className="h-full border-l-4 border-l-blue-500">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "چاڼ شوي" : "Filtered"}</p>
@@ -361,7 +361,7 @@ export default function EmployeesPage() {
             </CardContent>
           </Card>
           <Card className="h-full border-l-4 border-l-purple-500">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "د چاڼ معاش" : "Filtered Salary"}</p>
@@ -394,90 +394,92 @@ export default function EmployeesPage() {
             </div>
 
             {/* ── Filter bar ───────────────────────────────────────────── */}
-            <div className="mt-3 flex flex-wrap items-end gap-2">
+            <div className="mt-3">
 
-              {/* Search — name, ID, email, position */}
-              <div className="relative min-w-[160px] flex-1">
-                <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder={`${t("fullName")} / ID / ${t("email")}...`}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="h-8 ps-8 text-sm"
-                />
+              {/* Desktop: single row */}
+              <div className="hidden md:flex md:flex-wrap md:items-end md:gap-2">
+                <div className="relative min-w-[200px] flex-1">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder={`${t("fullName")} / ID / ${t("email")}...`} value={search}
+                    onChange={(e) => setSearch(e.target.value)} className="h-8 ps-8 text-sm" />
+                </div>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="h-8 w-[130px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{lang === "ps" ? "ټول رولونه" : "All Roles"}</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="operator">Pump Operator</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-8 w-[110px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")}</SelectItem>
+                    <SelectItem value="active">{t("active")}</SelectItem>
+                    <SelectItem value="inactive">{t("inactive")}</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "د استخدام له" : "Hired from"}</span>
+                  <Input type="date" value={hireFrom} onChange={(e) => setHireFrom(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "to"}</span>
+                  <Input type="date" value={hireTo} onChange={(e) => setHireTo(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
+                    onClick={() => { setSearch(""); setRoleFilter("all"); setStatusFilter("all"); setHireFrom(""); setHireTo(""); }}>
+                    {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                  </Button>
+                )}
               </div>
 
-              {/* Role filter */}
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="h-8 w-[130px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    {lang === "ps" ? "ټول رولونه" : "All Roles"}
-                  </SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="operator">Pump Operator</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Status filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 w-[130px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")}</SelectItem>
-                  <SelectItem value="active">{t("active")}</SelectItem>
-                  <SelectItem value="inactive">{t("inactive")}</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Hire date from */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">
-                  {lang === "ps" ? "د استخدام له" : "Hired from"}
-                </span>
-                <Input
-                  type="date"
-                  value={hireFrom}
-                  onChange={(e) => setHireFrom(e.target.value)}
-                  className="h-8 w-36 text-sm"
-                />
+              {/* Mobile: search full-width + 2-col grid */}
+              <div className="flex flex-col gap-2 md:hidden">
+                <div className="relative w-full">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder={`${t("fullName")} / ID / ${t("email")}...`} value={search}
+                    onChange={(e) => setSearch(e.target.value)} className="h-8 ps-8 text-sm" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{lang === "ps" ? "ټول رولونه" : "All Roles"}</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="operator">Pump Operator</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")}</SelectItem>
+                      <SelectItem value="active">{t("active")}</SelectItem>
+                      <SelectItem value="inactive">{t("inactive")}</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "د استخدام له" : "Hired from"}</span>
+                    <Input type="date" value={hireFrom} onChange={(e) => setHireFrom(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "to"}</span>
+                    <Input type="date" value={hireTo} onChange={(e) => setHireTo(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                </div>
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 w-fit text-xs"
+                    onClick={() => { setSearch(""); setRoleFilter("all"); setStatusFilter("all"); setHireFrom(""); setHireTo(""); }}>
+                    {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                  </Button>
+                )}
               </div>
 
-              {/* Hire date to */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">
-                  {lang === "ps" ? "تر" : "to"}
-                </span>
-                <Input
-                  type="date"
-                  value={hireTo}
-                  onChange={(e) => setHireTo(e.target.value)}
-                  className="h-8 w-36 text-sm"
-                />
-              </div>
-
-              {/* Clear all */}
-              {hasFilter && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 self-end text-xs"
-                  onClick={() => {
-                    setSearch("");
-                    setRoleFilter("all");
-                    setStatusFilter("all");
-                    setHireFrom("");
-                    setHireTo("");
-                  }}
-                >
-                  {lang === "ps" ? "پاکول ×" : "Clear ×"}
-                </Button>
-              )}
             </div>
           </CardHeader>
 
@@ -519,25 +521,17 @@ export default function EmployeesPage() {
                       return (
                         <tr key={emp.id} onClick={() => setViewRecord(emp)}
                           className={`cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/40 ${emp.status === "suspended" ? "bg-amber-500/5" : ""}`}>
-                          <td className="py-3 pr-4 ps-4 font-mono text-xs text-muted-foreground">
-                            {emp.employeeId}
-                          </td>
+                          <td className="py-3 pr-4 ps-4 font-mono text-xs text-muted-foreground">{emp.employeeId}</td>
                           <td className="py-3 pr-4 text-sm font-medium">{emp.fullName}</td>
-                          <td className="py-3 pr-4 text-sm text-muted-foreground">
-                            {linkedUser?.email ?? "—"}
-                          </td>
+                          <td className="py-3 pr-4 text-sm text-muted-foreground">{linkedUser?.email ?? "—"}</td>
                           <td className="py-3 pr-4 text-sm text-muted-foreground">{emp.phone}</td>
                           <td className="py-3 pr-4 text-sm">{emp.position}</td>
                           <td className="py-3 pr-4">
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                              emp.role === "admin"
-                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                                : emp.role === "manager"
-                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                : "bg-primary/10 text-primary"
-                            }`}>
-                              {emp.role}
-                            </span>
+                              emp.role === "admin" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                              : emp.role === "manager" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                              : "bg-primary/10 text-primary"
+                            }`}>{emp.role}</span>
                           </td>
                           <td className="py-3 pr-4 text-sm">{fmtCurrency(emp.salary, lang)}</td>
                           <td className="py-3 pr-4 text-sm text-muted-foreground">{emp.hireDate}</td>
@@ -545,7 +539,7 @@ export default function EmployeesPage() {
                           {isAdmin && (
                             <td className="py-3 pe-3 text-end">
                               <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(emp); }} className="h-8 w-8 p-0" title={t("edit")}>
+                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(emp); }} className="h-8 w-8 p-0" title={t("edit")}>
                                   <FiEdit2 className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteId(emp.id); }} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("delete")}>

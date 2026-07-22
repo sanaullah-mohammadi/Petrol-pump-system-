@@ -529,7 +529,7 @@ export default function SalesPage() {
         {/* ── Summary stat cards ─────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Card className="h-full border-l-4 border-l-primary">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("totalRevenue")}</p>
@@ -543,7 +543,7 @@ export default function SalesPage() {
             </CardContent>
           </Card>
           <Card className="h-full border-l-4 border-l-blue-500">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("credit")}</p>
@@ -557,7 +557,7 @@ export default function SalesPage() {
             </CardContent>
           </Card>
           <Card className="col-span-2 h-full border-l-4 border-l-green-500 sm:col-span-1">
-            <CardContent className="p-4 md:p-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("cash")}</p>
@@ -588,95 +588,182 @@ export default function SalesPage() {
             </div>
 
             {/* ── Filter bar ──────────────────────────────────────────── */}
-            <div className="mt-3 flex flex-wrap items-end gap-2">
+            {/* Mobile: search full-width + filters in 2-col grid          */}
+            {/* Desktop (md+): single flex row matching the screenshot      */}
+            <div className="mt-3">
 
-              {/* Search — TXN ID or customer name */}
-              <div className="relative min-w-[160px] flex-1">
-                <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={`${t("transactionId")} / ${t("customer")}...`}
-                  className="h-8 ps-8 text-sm"
-                />
+              {/* ── Desktop layout: one row ─────────────────────────── */}
+              <div className="hidden md:flex md:flex-wrap md:items-end md:gap-2">
+
+                {/* Search */}
+                <div className="relative min-w-[180px] flex-1">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={`${t("transactionId")} / ${t("customer")}...`}
+                    className="h-8 ps-8 text-sm"
+                  />
+                </div>
+
+                {/* Fuel type */}
+                <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                  <SelectTrigger className="h-8 w-[110px] text-sm"><SelectValue placeholder={t("fuel")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")}</SelectItem>
+                    {fuelTypes.map((ft) => (
+                      <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
+                          {ft.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Customer type */}
+                <Select value={custTypeFilter} onValueChange={setCustTypeFilter}>
+                  <SelectTrigger className="h-8 w-[100px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")}</SelectItem>
+                    <SelectItem value="cash">{t("cash")}</SelectItem>
+                    <SelectItem value="credit">{t("credit")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Transaction type */}
+                <Select value={txnTypeFilter} onValueChange={setTxnTypeFilter}>
+                  <SelectTrigger className="h-8 w-[100px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")}</SelectItem>
+                    <SelectItem value="retail">{t("retail")}</SelectItem>
+                    <SelectItem value="fleet">{t("fleet")}</SelectItem>
+                    <SelectItem value="bulk">{t("bulk")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Payment method */}
+                <Select value={methodFilter} onValueChange={setMethodFilter}>
+                  <SelectTrigger className="h-8 w-[100px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")}</SelectItem>
+                    <SelectItem value="cash">{t("cash")}</SelectItem>
+                    <SelectItem value="card">{t("card")}</SelectItem>
+                    <SelectItem value="credit">{t("credit")}</SelectItem>
+                    <SelectItem value="bank_transfer">{t("bankTransfer")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Date From — with label above */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+
+                {/* Date To — with label above */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+
+                {/* Clear */}
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
+                    onClick={() => { setSearch(""); setFuelFilter("all"); setCustTypeFilter("all"); setTxnTypeFilter("all"); setMethodFilter("all"); setDateFrom(""); setDateTo(""); }}>
+                    {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                  </Button>
+                )}
               </div>
 
-              {/* Fuel type */}
-              <Select value={fuelFilter} onValueChange={setFuelFilter}>
-                <SelectTrigger className="h-8 w-[140px] text-sm">
-                  <SelectValue placeholder={t("fuel")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
-                  {fuelTypes.map((ft) => (
-                    <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
-                        {ft.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* ── Mobile layout: search + 2-col grid ──────────────── */}
+              <div className="flex flex-col gap-2 md:hidden">
 
-              {/* Customer type */}
-              <Select value={custTypeFilter} onValueChange={setCustTypeFilter}>
-                <SelectTrigger className="h-8 w-[120px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")}</SelectItem>
-                  <SelectItem value="cash">{t("cash")}</SelectItem>
-                  <SelectItem value="credit">{t("credit")}</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Search */}
+                <div className="relative w-full">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={`${t("transactionId")} / ${t("customer")}...`}
+                    className="h-8 ps-8 text-sm"
+                  />
+                </div>
 
-              {/* Transaction type */}
-              <Select value={txnTypeFilter} onValueChange={setTxnTypeFilter}>
-                <SelectTrigger className="h-8 w-[110px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")}</SelectItem>
-                  <SelectItem value="retail">{t("retail")}</SelectItem>
-                  <SelectItem value="fleet">{t("fleet")}</SelectItem>
-                  <SelectItem value="bulk">{t("bulk")}</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="grid grid-cols-2 gap-2">
 
-              {/* Payment method */}
-              <Select value={methodFilter} onValueChange={setMethodFilter}>
-                <SelectTrigger className="h-8 w-[120px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")} — {t("method")}</SelectItem>
-                  <SelectItem value="cash">{t("cash")}</SelectItem>
-                  <SelectItem value="card">{t("card")}</SelectItem>
-                  <SelectItem value="credit">{t("credit")}</SelectItem>
-                  <SelectItem value="bank_transfer">{t("bankTransfer")}</SelectItem>
-                </SelectContent>
-              </Select>
+                  {/* Fuel type */}
+                  <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder={t("fuel")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")}</SelectItem>
+                      {fuelTypes.map((ft) => (
+                        <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
+                            {ft.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              {/* Date from */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-36 text-sm" />
+                  {/* Customer type */}
+                  <Select value={custTypeFilter} onValueChange={setCustTypeFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")}</SelectItem>
+                      <SelectItem value="cash">{t("cash")}</SelectItem>
+                      <SelectItem value="credit">{t("credit")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Transaction type */}
+                  <Select value={txnTypeFilter} onValueChange={setTxnTypeFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")}</SelectItem>
+                      <SelectItem value="retail">{t("retail")}</SelectItem>
+                      <SelectItem value="fleet">{t("fleet")}</SelectItem>
+                      <SelectItem value="bulk">{t("bulk")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Payment method */}
+                  <Select value={methodFilter} onValueChange={setMethodFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")}</SelectItem>
+                      <SelectItem value="cash">{t("cash")}</SelectItem>
+                      <SelectItem value="card">{t("card")}</SelectItem>
+                      <SelectItem value="credit">{t("credit")}</SelectItem>
+                      <SelectItem value="bank_transfer">{t("bankTransfer")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Date from */}
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                    <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 text-sm" />
+                  </div>
+
+                  {/* Date to */}
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                    <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 text-sm" />
+                  </div>
+
+                </div>
+
+                {/* Clear */}
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 w-fit text-xs"
+                    onClick={() => { setSearch(""); setFuelFilter("all"); setCustTypeFilter("all"); setTxnTypeFilter("all"); setMethodFilter("all"); setDateFrom(""); setDateTo(""); }}>
+                    {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                  </Button>
+                )}
               </div>
 
-              {/* Date to */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-36 text-sm" />
-              </div>
-
-              {/* Clear */}
-              {hasFilter && (
-                <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
-                  onClick={() => { setSearch(""); setFuelFilter("all"); setCustTypeFilter("all"); setTxnTypeFilter("all"); setMethodFilter("all"); setDateFrom(""); setDateTo(""); }}>
-                  {lang === "ps" ? "پاکول ×" : "Clear ×"}
-                </Button>
-              )}
             </div>
           </CardHeader>
 
@@ -692,99 +779,97 @@ export default function SalesPage() {
                 {lang === "ps" ? "کوم پلور ونه موندل شو" : "No sales match the current filters"}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full whitespace-nowrap">
-                  <thead>
-                    <tr className="border-b border-border">
-                      {[
-                        t("transactionId"),
-                        "Pump",
-                        t("fuel"),
-                        t("customer"),
-                        t("liters"),
-                        t("pricePerLiter"),
-                        t("total"),
-                        t("method"),
-                        t("transactionType"),
-                        t("employee"),
-                        t("date"),
-                        ...(canEdit ? [t("actions")] : []),
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className={`py-2 pr-4 text-xs font-medium text-muted-foreground first:ps-4 ${
-                            h === t("actions") ? "text-end" : "text-start"
-                          }`}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {paginated.map((s) => {
-                      const ft  = fuelTypes.find((f) => f.id === s.fuelTypeId);
-                      const emp = employees.find((e) => e.id === s.employeeId);
-                      return (
-                        <tr
-                          key={s.id}
-                          onClick={() => setViewRecord(s)}
-                          className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/40"
-                        >
-                          <td className="py-3 pr-4 ps-4 font-mono text-xs text-muted-foreground">
-                            {s.transactionId}
-                          </td>
-                          <td className="py-3 pr-4 text-sm">{s.pumpNumber}</td>
-                          <td className="py-3 pr-4">
-                            <div className="flex items-center gap-1.5">
-                              <span className="h-2 w-2 rounded-full" style={{ background: ft?.color ?? "#94a3b8" }} />
-                              <span className="text-sm">{ft?.name ?? "—"}</span>
-                            </div>
-                          </td>
-                          <td className="py-3 pr-4">
-                            <p className="text-sm">{s.customerName}</p>
-                            <span className={`rounded-full px-1.5 py-0.5 text-xs ${s.customerType === "credit" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted text-muted-foreground"}`}>
-                              {s.customerType}
-                            </span>
-                          </td>
-                          <td className="py-3 pr-4 text-sm">{s.liters}L</td>
-                          <td className="py-3 pr-4 text-sm">{fmtCurrency(s.pricePerLiter, lang, 3)}</td>
-                          <td className="py-3 pr-4 text-sm font-semibold">{fmtCurrency(s.totalAmount, lang)}</td>
-                          <td className="py-3 pr-4">
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize text-muted-foreground">
-                              {s.paymentMethod?.replace("_", " ")}
-                            </span>
-                          </td>
-                          <td className="py-3 pr-4">
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize text-muted-foreground">
-                              {s.transactionType}
-                            </span>
-                          </td>
-                          <td className="py-3 pr-4 text-sm text-muted-foreground">
-                            {emp?.fullName ?? "—"}
-                          </td>
-                          <td className="py-3 pr-4 text-xs text-muted-foreground">
-                            {format(new Date(s.date), "yyyy-MM-dd HH:mm")}
-                          </td>
-                          {canEdit && (
-                            <td className="py-3 pe-3 text-end">
-                              <div className="flex items-center justify-end gap-1">
-                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(s); }} className="h-8 w-8 p-0" title={t("edit")}>
-                                  <FiEdit2 className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteId(s.id); }} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("delete")}>
-                                  <FiTrash2 className="h-3.5 w-3.5" />
-                                </Button>
+              <>
+                {/* ── Table (horizontally scrollable on all screen sizes) ── */}
+                <div className="overflow-x-auto">
+                  <table className="w-full whitespace-nowrap">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {[
+                          t("transactionId"),
+                          "Pump",
+                          t("fuel"),
+                          t("customer"),
+                          t("liters"),
+                          t("pricePerLiter"),
+                          t("total"),
+                          t("method"),
+                          t("transactionType"),
+                          t("employee"),
+                          t("date"),
+                          ...(canEdit ? [t("actions")] : []),
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className={`py-2 pr-4 text-xs font-medium text-muted-foreground first:ps-4 ${
+                              h === t("actions") ? "text-end" : "text-start"
+                            }`}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginated.map((s) => {
+                        const ft  = fuelTypes.find((f) => f.id === s.fuelTypeId);
+                        const emp = employees.find((e) => e.id === s.employeeId);
+                        return (
+                          <tr
+                            key={s.id}
+                            onClick={() => setViewRecord(s)}
+                            className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/40"
+                          >
+                            <td className="py-3 pr-4 ps-4 font-mono text-xs text-muted-foreground">{s.transactionId}</td>
+                            <td className="py-3 pr-4 text-sm">{s.pumpNumber}</td>
+                            <td className="py-3 pr-4">
+                              <div className="flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full" style={{ background: ft?.color ?? "#94a3b8" }} />
+                                <span className="text-sm">{ft?.name ?? "—"}</span>
                               </div>
                             </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            <td className="py-3 pr-4">
+                              <p className="text-sm">{s.customerName}</p>
+                              <span className={`rounded-full px-1.5 py-0.5 text-xs ${s.customerType === "credit" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted text-muted-foreground"}`}>
+                                {s.customerType}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4 text-sm">{s.liters}L</td>
+                            <td className="py-3 pr-4 text-sm">{fmtCurrency(s.pricePerLiter, lang, 3)}</td>
+                            <td className="py-3 pr-4 text-sm font-semibold">{fmtCurrency(s.totalAmount, lang)}</td>
+                            <td className="py-3 pr-4">
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize text-muted-foreground">
+                                {s.paymentMethod?.replace("_", " ")}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4">
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize text-muted-foreground">
+                                {s.transactionType}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4 text-sm text-muted-foreground">{emp?.fullName ?? "—"}</td>
+                            <td className="py-3 pr-4 text-xs text-muted-foreground">
+                              {format(new Date(s.date), "yyyy-MM-dd HH:mm")}
+                            </td>
+                            {canEdit && (
+                              <td className="py-3 pe-3 text-end">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(s); }} className="h-8 w-8 p-0" title={t("edit")}>
+                                    <FiEdit2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteId(s.id); }} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("delete")}>
+                                    <FiTrash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
             <TablePagination page={safePage} totalPages={totalPages} total={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
           </CardContent>

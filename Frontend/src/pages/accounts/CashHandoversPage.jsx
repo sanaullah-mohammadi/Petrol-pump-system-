@@ -58,14 +58,16 @@ const submitSchema = z.object({
 function Tab({ label, count, active, onClick, color }) {
   return (
     <button onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+      className={`flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:gap-1.5 sm:px-3 sm:text-sm ${
         active
-          ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-muted"
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground hover:text-foreground"
       }`}>
-      {label}
+      <span className="truncate">{label}</span>
       {count > 0 && (
-        <span className={`rounded-full px-1.5 py-px text-xs font-bold ${active ? "bg-primary-foreground/20 text-primary-foreground" : color ?? "bg-muted-foreground/20"}`}>
+        <span className={`shrink-0 rounded-full px-1.5 py-px text-[10px] font-bold ${
+          active ? "bg-primary/15 text-primary" : color ?? "bg-muted-foreground/20"
+        }`}>
           {count}
         </span>
       )}
@@ -267,7 +269,7 @@ export default function CashHandoversPage() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {/* Total handovers */}
           <Card className="border-l-4 border-l-primary">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول سپارونه" : "Total Handovers"}</p>
@@ -282,7 +284,7 @@ export default function CashHandoversPage() {
 
           {/* Total cash */}
           <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول نقد" : "Total Cash"}</p>
@@ -299,7 +301,7 @@ export default function CashHandoversPage() {
 
           {/* Pending */}
           <Card className="border-l-4 border-l-yellow-500">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "پاتې" : "Pending"}</p>
@@ -317,7 +319,7 @@ export default function CashHandoversPage() {
 
           {/* Confirmed */}
           <Card className="border-l-4 border-l-blue-500">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "تایید شوي" : "Confirmed"}</p>
@@ -364,7 +366,7 @@ export default function CashHandoversPage() {
             </div>
 
             {/* ── Status tabs ───────────────────────────────────────────── */}
-            <div className="mt-3 flex flex-wrap gap-1.5">
+            <div className="mt-3 flex items-center gap-0.5 rounded-lg border border-input bg-muted/40 p-1">
               <Tab label={t("allHandovers")} count={allVisible.length} active={tab === "all"} onClick={() => setTab("all")} />
               <Tab label={t("pending")}  count={pendingCount}   active={tab === "pending"}
                 onClick={() => setTab("pending")}
@@ -378,52 +380,89 @@ export default function CashHandoversPage() {
             </div>
 
             {/* ── Filters ───────────────────────────────────────────────── */}
-            <div className="mt-3 flex flex-wrap items-end gap-2">
-              {/* Search */}
-              <div className="relative min-w-[160px] flex-1">
-                <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={lang === "ps" ? "د کارمند نوم یا ID..." : "Employee name or ID..."}
-                  className="h-8 ps-8 text-sm"
-                />
+            <div className="mt-3">
+
+              {/* Desktop: single row */}
+              <div className="hidden md:flex md:flex-wrap md:items-end md:gap-2">
+                <div className="relative min-w-[180px] flex-1">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={lang === "ps" ? "د کارمند نوم یا ID..." : "Employee name or ID..."}
+                    className="h-8 ps-8 text-sm" />
+                </div>
+                {canManage && (
+                  <Select value={filterEmpId} onValueChange={setFilterEmpId}>
+                    <SelectTrigger className="h-8 w-[150px] text-sm">
+                      <SelectValue placeholder={lang === "ps" ? "کارمند" : "Employee"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{lang === "ps" ? "ټول کارمندان" : "All Employees"}</SelectItem>
+                      {employees.filter((e) => e.status === "active").map((e) => (
+                        <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                  <Input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                  <Input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                {hasActiveFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
+                    onClick={() => { setSearch(""); setFilterEmpId("all"); setFilterFrom(""); setFilterTo(""); }}>
+                    {lang === "ps" ? "پاکول" : "Clear"}
+                  </Button>
+                )}
               </div>
 
-              {/* Employee filter — admin/manager only */}
-              {canManage && (
-                <Select value={filterEmpId} onValueChange={setFilterEmpId}>
-                  <SelectTrigger className="h-8 w-[150px] text-sm">
-                    <SelectValue placeholder={lang === "ps" ? "کارمند" : "Employee"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{lang === "ps" ? "ټول کارمندان" : "All Employees"}</SelectItem>
-                    {employees.filter((e) => e.status === "active").map((e) => (
-                      <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              {/* Mobile: search full-width + employee full-width + From/To side-by-side */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {/* Row 1: search */}
+                <div className="relative w-full">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={lang === "ps" ? "د کارمند نوم یا ID..." : "Employee name or ID..."}
+                    className="h-8 ps-8 text-sm" />
+                </div>
 
-              {/* Date from */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
-                <Input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 w-36 text-sm" />
+                {/* Row 2: employee selector full-width (admin/manager only) */}
+                {canManage && (
+                  <Select value={filterEmpId} onValueChange={setFilterEmpId}>
+                    <SelectTrigger className="h-8 w-full text-sm">
+                      <SelectValue placeholder={lang === "ps" ? "کارمند" : "Employee"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{lang === "ps" ? "ټول کارمندان" : "All Employees"}</SelectItem>
+                      {employees.filter((e) => e.status === "active").map((e) => (
+                        <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {/* Row 3: From / To side-by-side */}
+                <div className="flex items-end gap-2">
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                    <Input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 w-full text-sm" />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                    <Input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 w-full text-sm" />
+                  </div>
+                  {hasActiveFilter && (
+                    <Button variant="ghost" size="sm" className="h-8 shrink-0 self-end text-xs"
+                      onClick={() => { setSearch(""); setFilterEmpId("all"); setFilterFrom(""); setFilterTo(""); }}>
+                      {lang === "ps" ? "پاکول" : "Clear"}
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              {/* Date to */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
-                <Input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 w-36 text-sm" />
-              </div>
-
-              {/* Clear filters */}
-              {hasActiveFilter && (
-                <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
-                  onClick={() => { setSearch(""); setFilterEmpId("all"); setFilterFrom(""); setFilterTo(""); }}>
-                  {lang === "ps" ? "پاکول" : "Clear"}
-                </Button>
-              )}
             </div>
           </CardHeader>
 

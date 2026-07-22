@@ -466,17 +466,60 @@ export default function ReportsPage() {
         {/* ── Controls card ─────────────────────────────────────────────── */}
         <Card>
           <CardContent className="p-4 pt-5">
-            <div className="flex flex-wrap items-end gap-4">
 
-              {/* Report type selector with icons */}
+            {/* Desktop: single row */}
+            <div className="hidden md:flex md:flex-wrap md:items-end md:gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground">
                   {lang === "ps" ? "د راپور ډول" : "Report Type"}
                 </label>
                 <Select value={reportType} onValueChange={handleReportTypeChange}>
-                  <SelectTrigger className="h-9 w-56">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="h-9 w-56"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(periodLabel).map((k) => {
+                      const m = REPORT_META[k];
+                      const Icon = m?.icon ?? FiFileText;
+                      return (
+                        <SelectItem key={k} value={k}>
+                          <div className="flex items-center gap-2">
+                            <span className={`flex h-5 w-5 items-center justify-center rounded ${m?.bg ?? "bg-muted"}`}>
+                              <Icon className={`h-3 w-3 ${m?.color ?? "text-muted-foreground"}`} />
+                            </span>
+                            {periodLabel[k]}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "له" : "From"}</label>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 w-38" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "تر" : "To"}</label>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 w-38" />
+              </div>
+              <div className="ms-auto flex items-center gap-2 self-end">
+                <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <FiPrinter className="mr-1.5 h-4 w-4" /> {t("print")}
+                </Button>
+                <Button size="sm" onClick={handlePDF}>
+                  <FiDownload className="mr-1.5 h-4 w-4" /> {t("exportPDF")}
+                </Button>
+              </div>
+            </div>
+
+            {/* Mobile: stacked rows */}
+            <div className="flex flex-col gap-2 md:hidden">
+              {/* Row 1: report type full-width */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ps" ? "د راپور ډول" : "Report Type"}
+                </label>
+                <Select value={reportType} onValueChange={handleReportTypeChange}>
+                  <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.keys(periodLabel).map((k) => {
                       const m = REPORT_META[k];
@@ -496,30 +539,29 @@ export default function ReportsPage() {
                 </Select>
               </div>
 
-              {/* Date range */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {lang === "ps" ? "له" : "From"}
-                </label>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 w-38" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {lang === "ps" ? "تر" : "To"}
-                </label>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 w-38" />
+              {/* Row 2: From / To side-by-side */}
+              <div className="flex items-end gap-2">
+                <div className="flex flex-1 flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "له" : "From"}</label>
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 w-full" />
+                </div>
+                <div className="flex flex-1 flex-col gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">{lang === "ps" ? "تر" : "To"}</label>
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 w-full" />
+                </div>
               </div>
 
-              {/* Actions */}
-              <div className="ms-auto flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrint}>
+              {/* Row 3: action buttons */}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={handlePrint}>
                   <FiPrinter className="mr-1.5 h-4 w-4" /> {t("print")}
                 </Button>
-                <Button size="sm" onClick={handlePDF}>
+                <Button size="sm" className="flex-1" onClick={handlePDF}>
                   <FiDownload className="mr-1.5 h-4 w-4" /> {t("exportPDF")}
                 </Button>
               </div>
             </div>
+
           </CardContent>
         </Card>
 

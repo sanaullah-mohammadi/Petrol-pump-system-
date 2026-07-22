@@ -413,7 +413,7 @@ export default function AppLayout({ children, title }) {
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* ── Desktop sidebar ──────────────────────────────────────────────────── */}
       <aside className={clsx(
-        "hidden h-screen shrink-0 flex-col border-e border-sidebar-border bg-sidebar transition-[width] duration-300 lg:flex",
+        "hidden h-screen shrink-0 flex-col border-e border-sidebar-border bg-sidebar-background transition-[width] duration-300 lg:flex",
         sidebarCollapsed ? "w-[60px]" : "w-64",
       )}>
         {/* Logo + toggle button */}
@@ -468,21 +468,25 @@ export default function AppLayout({ children, title }) {
       {/* ── Mobile sidebar overlay ─────────────────────────────────── */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute start-0 top-0 flex h-full w-72 flex-col overflow-y-auto scroll-smooth bg-sidebar">
+          {/* Drawer */}
+          <aside className="absolute start-0 top-0 z-10 flex h-full w-72 flex-col overflow-y-auto scroll-smooth border-e border-sidebar-border bg-sidebar-background shadow-2xl">
             <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-4">
               <div className="flex items-center gap-2">
-                <FiActivity className="h-5 w-5 text-sidebar-primary" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
+                  <FiActivity className="h-4 w-4 text-sidebar-primary-foreground" />
+                </div>
                 <span className="text-sm font-bold text-sidebar-foreground">
                   {t("appName")}
                 </span>
               </div>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="text-sidebar-foreground"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
               >
                 <FiX className="h-5 w-5" />
               </button>
@@ -690,7 +694,7 @@ export default function AppLayout({ children, title }) {
         </header>
 
         {/* Page body */}
-        <main className="flex-1 overflow-y-auto scroll-smooth p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto scroll-smooth p-4 pb-8 md:p-6">
           {children}
         </main>
       </div>

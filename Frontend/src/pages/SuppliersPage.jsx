@@ -211,7 +211,7 @@ export default function SuppliersPage() {
         {/* ── Stat cards ───────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <Card className="border-l-4 border-l-primary">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("totalSuppliers")}</p>
@@ -224,7 +224,7 @@ export default function SuppliersPage() {
             </CardContent>
           </Card>
           <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("activeSuppliers")}</p>
@@ -237,7 +237,7 @@ export default function SuppliersPage() {
             </CardContent>
           </Card>
           <Card className="col-span-2 border-l-4 border-l-orange-500 lg:col-span-1">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("inactiveSuppliers")}</p>
@@ -299,54 +299,57 @@ export default function SuppliersPage() {
                 <p className="text-sm">{lang === "ps" ? "کوم عرضه کوونکی ونه موندل شو" : "No suppliers found"}</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full whitespace-nowrap">
-                  <thead>
-                    <tr className="border-b border-border">
-                      {["ID", t("companyName"), t("contactPerson"), t("phone"),
-                        t("fuelTypesSupplied"), t("paymentTerms"), t("status"),
-                        t("totalPurchasesFromSupplier"), t("actions"),
-                      ].map((h) => (
-                        <th key={h} className={`py-2 pr-4 text-xs font-medium text-muted-foreground first:ps-4 ${h === t("actions") ? "text-end" : "text-start"}`}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginated.map((s) => (
-                      <tr key={s.id} onClick={() => setViewRecord(s)}
-                        className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/40">
-                        <td className="py-3 pr-4 ps-4 font-mono text-xs text-muted-foreground">{s.supplierId}</td>
-                        <td className="py-3 pr-4 text-sm font-medium">{s.companyName}</td>
-                        <td className="py-3 pr-4 text-sm text-muted-foreground">{s.contactPerson}</td>
-                        <td className="py-3 pr-4 text-sm text-muted-foreground">{s.phone}</td>
-                        <td className="py-3 pr-4 text-sm text-muted-foreground max-w-[140px] truncate">
-                          {Array.isArray(s.fuelTypes) ? s.fuelTypes.join(", ") : (s.fuelTypesSupplied || "—")}
-                        </td>
-                        <td className="py-3 pr-4 text-sm text-muted-foreground">{ptLabel(s.paymentTerms)}</td>
-                        <td className="py-3 pr-4"><StatusBadge status={s.status} /></td>
-                        <td className="py-3 pr-4 text-sm">
-                          <span className="font-semibold text-foreground">{purchaseCountFor(s.companyName)}</span>
-                          <span className="ms-1 text-xs text-muted-foreground">({fmtCurrency(totalSpendFor(s.companyName), lang)})</span>
-                        </td>
-                        <td className="py-3 pe-3 text-end">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(s); }}
-                              className="h-8 w-8 p-0" title={t("edit")}>
-                              <FiEdit2 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteClick(s.id); }}
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("delete")}>
-                              <FiTrash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </td>
+              <>
+                {/* ── Table (horizontally scrollable on all screen sizes) ── */}
+                <div className="overflow-x-auto">
+                  <table className="w-full whitespace-nowrap">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {["ID", t("companyName"), t("contactPerson"), t("phone"),
+                          t("fuelTypesSupplied"), t("paymentTerms"), t("status"),
+                          t("totalPurchasesFromSupplier"), t("actions"),
+                        ].map((h) => (
+                          <th key={h} className={`py-2 pr-4 text-xs font-medium text-muted-foreground first:ps-4 ${h === t("actions") ? "text-end" : "text-start"}`}>
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {paginated.map((s) => (
+                        <tr key={s.id} onClick={() => setViewRecord(s)}
+                          className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                          <td className="py-3 pr-4 ps-4 font-mono text-xs text-muted-foreground">{s.supplierId}</td>
+                          <td className="py-3 pr-4 text-sm font-medium">{s.companyName}</td>
+                          <td className="py-3 pr-4 text-sm text-muted-foreground">{s.contactPerson}</td>
+                          <td className="py-3 pr-4 text-sm text-muted-foreground">{s.phone}</td>
+                          <td className="py-3 pr-4 text-sm text-muted-foreground max-w-[140px] truncate">
+                            {Array.isArray(s.fuelTypes) ? s.fuelTypes.join(", ") : (s.fuelTypesSupplied || "—")}
+                          </td>
+                          <td className="py-3 pr-4 text-sm text-muted-foreground">{ptLabel(s.paymentTerms)}</td>
+                          <td className="py-3 pr-4"><StatusBadge status={s.status} /></td>
+                          <td className="py-3 pr-4 text-sm">
+                            <span className="font-semibold text-foreground">{purchaseCountFor(s.companyName)}</span>
+                            <span className="ms-1 text-xs text-muted-foreground">({fmtCurrency(totalSpendFor(s.companyName), lang)})</span>
+                          </td>
+                          <td className="py-3 pe-3 text-end">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(s); }}
+                                className="h-8 w-8 p-0" title={t("edit")}>
+                                <FiEdit2 className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteClick(s.id); }}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("delete")}>
+                                <FiTrash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
             <TablePagination page={safePage} totalPages={totalPages} total={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
           </CardContent>

@@ -262,7 +262,7 @@ export default function PumpsPage() {
         {/* ── Stat cards ────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Card className="border-l-4 border-l-primary">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("totalPumps")}</p>
@@ -275,7 +275,7 @@ export default function PumpsPage() {
             </CardContent>
           </Card>
           <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("activePumps")}</p>
@@ -288,7 +288,7 @@ export default function PumpsPage() {
             </CardContent>
           </Card>
           <Card className={`border-l-4 ${lowTankCount > 0 ? "border-l-destructive" : "border-l-slate-400"}`}>
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{t("lowTankWarning")}</p>
@@ -301,7 +301,7 @@ export default function PumpsPage() {
             </CardContent>
           </Card>
           <Card className="border-l-4 border-l-yellow-500">
-            <CardContent className="p-4 pt-5">
+            <CardContent className="px-5 pb-5 pt-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ساتنه" : "Maintenance"}</p>

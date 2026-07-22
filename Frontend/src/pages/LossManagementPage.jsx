@@ -194,16 +194,16 @@ export default function LossManagementPage() {
 
         {/* ── Summary stat cards ──────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Card className="col-span-2 h-full border-l-4 border-l-destructive md:col-span-1">
-            <CardContent className="p-4 md:p-5">
-              <div className="flex items-start justify-between">
-                <div>
+          <Card className="h-full border-l-4 border-l-destructive">
+            <CardContent className="px-5 pb-5 pt-6">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted-foreground">{lang === "ps" ? "ټول تاوانونه" : "Total Losses"}</p>
-                  <p className="mt-1 text-xl font-bold text-destructive">{fmtCurrency(totalLoss, lang)}</p>
+                  <p className="mt-1 text-xl font-bold leading-tight text-destructive">{fmtCurrency(totalLoss, lang)}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{losses.length} {lang === "ps" ? "ریکارډونه" : "records"}</p>
                 </div>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
-                  <FiAlertTriangle className="h-5 w-5 text-destructive" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/10 md:h-10 md:w-10">
+                  <FiAlertTriangle className="h-4 w-4 text-destructive md:h-5 md:w-5" />
                 </div>
               </div>
             </CardContent>
@@ -214,15 +214,15 @@ export default function LossManagementPage() {
             const accentMap = { "Fuel Leakage": "border-l-blue-500", "Pump Damage": "border-l-orange-500", "Price Difference": "border-l-purple-500", "Other": "border-l-slate-400" };
             return (
               <Card key={item.type} className={`h-full border-l-4 ${accentMap[item.type] ?? "border-l-slate-400"}`}>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
+                <CardContent className="px-5 pb-5 pt-6">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
                       <p className="text-pretty text-xs text-muted-foreground">{item.type}</p>
-                      <p className="mt-1 text-lg font-bold text-foreground">{fmtCurrency(item.total, lang)}</p>
+                      <p className="mt-1 text-xl font-bold leading-tight text-foreground">{fmtCurrency(item.total, lang)}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{item.count} {lang === "ps" ? "پیښې" : "incidents"}</p>
                     </div>
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${meta.bg}`}>
-                      <Icon className={`h-5 w-5 ${meta.color}`} />
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl md:h-10 md:w-10 ${meta.bg}`}>
+                      <Icon className={`h-4 w-4 md:h-5 md:w-5 ${meta.color}`} />
                     </div>
                   </div>
                 </CardContent>
@@ -252,82 +252,131 @@ export default function LossManagementPage() {
             </div>
 
             {/* ── Filter bar ───────────────────────────────────────────── */}
-            <div className="mt-3 flex flex-wrap items-end gap-2">
+            <div className="mt-3">
 
-              {/* Search — lossId or description */}
-              <div className="relative min-w-[160px] flex-1">
-                <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={`ID / ${t("description")}...`}
-                  className="h-8 ps-8 text-sm"
-                />
-              </div>
-
-              {/* Loss type filter */}
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="h-8 w-[160px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    {lang === "ps" ? "ټول ډولونه" : "All Types"}
-                  </SelectItem>
-                  {LOSS_TYPES.map((lt) => {
-                    const meta = getLossMeta(lt);
-                    const Icon = meta.icon;
-                    return (
-                      <SelectItem key={lt} value={lt}>
-                        <div className="flex items-center gap-2">
-                          <span className={`flex h-5 w-5 items-center justify-center rounded ${meta.bg}`}>
-                            <Icon className={`h-3 w-3 ${meta.color}`} />
-                          </span>
-                          {lt}
+              {/* Desktop: single row */}
+              <div className="hidden md:flex md:flex-wrap md:items-end md:gap-2">
+                <div className="relative min-w-[160px] flex-1">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={`ID / ${t("description")}...`} className="h-8 ps-8 text-sm" />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="h-8 w-[160px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{lang === "ps" ? "ټول ډولونه" : "All Types"}</SelectItem>
+                    {LOSS_TYPES.map((lt) => {
+                      const meta = getLossMeta(lt);
+                      const Icon = meta.icon;
+                      return (
+                        <SelectItem key={lt} value={lt}>
+                          <div className="flex items-center gap-2">
+                            <span className={`flex h-5 w-5 items-center justify-center rounded ${meta.bg}`}>
+                              <Icon className={`h-3 w-3 ${meta.color}`} />
+                            </span>
+                            {lt}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                  <SelectTrigger className="h-8 w-[130px] text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
+                    {fuelTypes.map((ft) => (
+                      <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
+                          {ft.name}
                         </div>
                       </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-
-              {/* Fuel type filter */}
-              <Select value={fuelFilter} onValueChange={setFuelFilter}>
-                <SelectTrigger className="h-8 w-[140px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
-                  {fuelTypes.map((ft) => (
-                    <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
-                        {ft.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Date from */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-36 text-sm" />
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                  <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                  <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-[140px] text-sm" />
+                </div>
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
+                    onClick={() => { setSearch(""); setTypeFilter("all"); setFuelFilter("all"); setDateFrom(""); setDateTo(""); }}>
+                    {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                  </Button>
+                )}
               </div>
 
-              {/* Date to */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-36 text-sm" />
+              {/* Mobile: search full-width + selects in 2-col grid + From/To side-by-side */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {/* Row 1: search */}
+                <div className="relative w-full">
+                  <FiSearch className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={`ID / ${t("description")}...`} className="h-8 ps-8 text-sm" />
+                </div>
+
+                {/* Row 2: loss type + fuel type */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{lang === "ps" ? "ټول ډولونه" : "All Types"}</SelectItem>
+                      {LOSS_TYPES.map((lt) => {
+                        const meta = getLossMeta(lt);
+                        const Icon = meta.icon;
+                        return (
+                          <SelectItem key={lt} value={lt}>
+                            <div className="flex items-center gap-2">
+                              <span className={`flex h-5 w-5 items-center justify-center rounded ${meta.bg}`}>
+                                <Icon className={`h-3 w-3 ${meta.color}`} />
+                              </span>
+                              {lt}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("filterAll")} — {t("fuel")}</SelectItem>
+                      {fuelTypes.map((ft) => (
+                        <SelectItem key={ft.id} value={ft.id} textValue={ft.name}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full" style={{ background: ft.color ?? "#94a3b8" }} />
+                            {ft.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Row 3: From / To side-by-side */}
+                <div className="flex items-end gap-2">
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "له" : "From"}</span>
+                    <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-full text-sm" />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{lang === "ps" ? "تر" : "To"}</span>
+                    <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-full text-sm" />
+                  </div>
+                  {hasFilter && (
+                    <Button variant="ghost" size="sm" className="h-8 shrink-0 self-end text-xs"
+                      onClick={() => { setSearch(""); setTypeFilter("all"); setFuelFilter("all"); setDateFrom(""); setDateTo(""); }}>
+                      {lang === "ps" ? "پاکول ×" : "Clear ×"}
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              {/* Clear all */}
-              {hasFilter && (
-                <Button variant="ghost" size="sm" className="h-8 self-end text-xs"
-                  onClick={() => { setSearch(""); setTypeFilter("all"); setFuelFilter("all"); setDateFrom(""); setDateTo(""); }}>
-                  {lang === "ps" ? "پاکول ×" : "Clear ×"}
-                </Button>
-              )}
             </div>
           </CardHeader>
 
