@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useLayoutEffect } from "react";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -10,6 +10,7 @@ import {
   FiBell,
   FiChevronDown,
   FiChevronRight,
+  FiChevronLeft,
   FiCreditCard,
   FiDroplet,
   FiFileText,
@@ -263,22 +264,21 @@ function LangSelector({ compact = false }) {
 }
 
 // ─── Sidebar navigation ───────────────────────────────────────────────────────
-function SidebarNav({ onClose }) {
+function SidebarNav({ onClose, collapsed }) {
   const location = useLocation();
   const { user } = useAppSelector((s) => s.auth);
   const navItems = useNavItems();
 
-  const [expanded, setExpanded] = useState(() => {
-    // Keep parent groups open by default
-    return navItems.filter((i) => i.children).map((i) => i.labelKey);
-  });
+  const [expanded, setExpanded] = useState(() =>
+    navItems.filter((i) => i.children).map((i) => i.labelKey),
+  );
 
   const toggle = (key) =>
     setExpanded((prev) =>
       prev.includes(key) ? prev.filter((l) => l !== key) : [...prev, key],
     );
 
-  const isActive = (path) => path === location.pathname;
+  const isActive     = (path) => path === location.pathname;
   const isParentActive = (item) =>
     item.children?.some((c) => c.path === location.pathname) ?? false;
   const allowed = (item) =>
@@ -288,28 +288,33 @@ function SidebarNav({ onClose }) {
     <nav className="flex flex-col gap-1 p-3">
       {navItems.filter(allowed).map((item) => {
         if (item.children) {
-          const isOpen = expanded.includes(item.labelKey);
+          const isOpen     = expanded.includes(item.labelKey) && !collapsed;
           const parentActive = isParentActive(item);
           return (
             <div key={item.labelKey}>
               <button
-                onClick={() => toggle(item.labelKey)}
+                onClick={() => !collapsed && toggle(item.labelKey)}
+                title={collapsed ? item.label : undefined}
                 className={clsx(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                  collapsed && "justify-center px-2",
                   parentActive
                     ? "bg-sidebar-accent text-sidebar-primary"
                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                {isOpen ? (
-                  <FiChevronDown className="h-3 w-3 shrink-0" />
-                ) : (
-                  <FiChevronRight className="h-3 w-3 shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    {isOpen
+                      ? <FiChevronDown className="h-3 w-3 shrink-0" />
+                      : <FiChevronRight className="h-3 w-3 shrink-0" />
+                    }
+                  </>
                 )}
               </button>
-              {isOpen && (
+              {isOpen && !collapsed && (
                 <div className="ms-7 mt-1 flex flex-col gap-1">
                   {item.children.map((child) => (
                     <Link
@@ -336,15 +341,17 @@ function SidebarNav({ onClose }) {
             key={item.path}
             to={item.path ?? ""}
             onClick={onClose}
+            title={collapsed ? item.label : undefined}
             className={clsx(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              collapsed && "justify-center px-2",
               isActive(item.path)
                 ? "bg-sidebar-primary text-sidebar-primary-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )}
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 truncate">{item.label}</span>
+            {!collapsed && <span className="min-w-0 truncate">{item.label}</span>}
           </Link>
         );
       })}
@@ -354,7 +361,10 @@ function SidebarNav({ onClose }) {
 
 // ─── Main layout ────────────────────────────────────────────────────────────
 export default function AppLayout({ children, title }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen,        setMobileOpen]        = useState(false);
+  const [sidebarCollapsed,  setSidebarCollapsed]  = useState(
+    () => localStorage.getItem("sidebarCollapsed") === "true",
+  );
   const [darkMode, setDarkMode] = useState(() =>
     document.documentElement.classList.contains("dark"),
   );
@@ -365,6 +375,23 @@ export default function AppLayout({ children, title }) {
 
   const notifications = useNotifications();
   const notifCount    = notifications.length;
+
+  // ── Preserve sidebar scroll position across navigations ──────────────────
+  const sidebarScrollRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const el = sidebarScrollRef.current;
+    if (!el) return;
+    const saved = parseInt(sessionStorage.getItem("sidebarScrollTop") ?? "0", 10);
+    if (saved > 0) el.scrollTop = saved;
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      localStorage.setItem("sidebarCollapsed", String(!prev));
+      return !prev;
+    });
+  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -385,25 +412,56 @@ export default function AppLayout({ children, title }) {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* ── Desktop sidebar ──────────────────────────────────────────────────── */}
-      <aside className="hidden h-screen w-64 shrink-0 flex-col border-e border-sidebar-border bg-sidebar lg:flex">
-        {/* Logo */}
-        <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
-            <FiActivity className="h-5 w-5 text-sidebar-primary-foreground" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-sidebar-foreground">
-              {t("appName")}
-            </p>
-            <p className="truncate text-xs text-sidebar-foreground/60">
-              {t("appSubtitle")}
-            </p>
-          </div>
+      <aside className={clsx(
+        "hidden h-screen shrink-0 flex-col border-e border-sidebar-border bg-sidebar transition-[width] duration-300 lg:flex",
+        sidebarCollapsed ? "w-[60px]" : "w-64",
+      )}>
+        {/* Logo + toggle button */}
+        <div className={clsx(
+          "flex items-center border-b border-sidebar-border px-3 py-4",
+          sidebarCollapsed ? "justify-center" : "gap-3 px-4",
+        )}>
+          {!sidebarCollapsed && (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
+              <FiActivity className="h-5 w-5 text-sidebar-primary-foreground" />
+            </div>
+          )}
+          {!sidebarCollapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-sidebar-foreground">
+                {t("appName")}
+              </p>
+              <p className="truncate text-xs text-sidebar-foreground/60">
+                {t("appSubtitle")}
+              </p>
+            </div>
+          )}
+          {/* Collapse / expand toggle */}
+          <button
+            onClick={toggleSidebar}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={clsx(
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              sidebarCollapsed && "mx-auto",
+            )}
+          >
+            {sidebarCollapsed
+              ? <FiChevronRight className="h-4 w-4" />
+              : <FiChevronLeft  className="h-4 w-4" />
+            }
+          </button>
         </div>
 
         {/* Nav */}
-        <div className="flex-1 overflow-y-auto scroll-smooth">
-          <SidebarNav />
+        <div
+          ref={sidebarScrollRef}
+          onScroll={() => {
+            const top = sidebarScrollRef.current?.scrollTop ?? 0;
+            sessionStorage.setItem("sidebarScrollTop", String(top));
+          }}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+        >
+          <SidebarNav collapsed={sidebarCollapsed} />
         </div>
       </aside>
 

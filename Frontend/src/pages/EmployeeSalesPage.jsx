@@ -249,7 +249,8 @@ export default function EmployeeSalesPage() {
 
                       return (
                         <tr key={date}
-                          className="border-b border-border transition-colors last:border-0 hover:bg-muted/30">
+                          onClick={() => setDrillDialog({ open: true, rows, date })}
+                          className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/40">
                           <td className="py-3 pr-4 ps-4 text-sm font-medium">{date}</td>
                           <td className="py-3 pr-4">
                             <Badge variant="secondary" className="font-mono">{rows.length}</Badge>
@@ -268,7 +269,7 @@ export default function EmployeeSalesPage() {
                           <td className="py-3 pe-3">
                             <Button variant="ghost" size="sm"
                               className="h-7 gap-1 px-2 text-xs"
-                              onClick={() => setDrillDialog({ open: true, rows, date })}>
+                              onClick={(e) => { e.stopPropagation(); setDrillDialog({ open: true, rows, date }); }}>
                               {lang === "ps" ? "لیدل" : "View"}
                               <FiChevronRight className="h-3 w-3" />
                             </Button>

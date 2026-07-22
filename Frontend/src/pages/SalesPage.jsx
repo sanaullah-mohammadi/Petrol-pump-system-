@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -10,7 +10,7 @@ import { z } from "zod";
 
 import toast from "react-hot-toast";
 
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiShoppingCart, FiCreditCard, FiTrendingUp } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiShoppingCart, FiCreditCard, FiTrendingUp, FiCheck, FiChevronDown } from "react-icons/fi";
 
 import { format } from "date-fns";
 
@@ -78,6 +78,106 @@ const schema = z.object({
   transactionType: z.enum(["retail", "fleet", "bulk"]),
   notes: z.string().optional(),
 });
+
+// ── Searchable Customer Combobox ──────────────────────────────────────────────
+function CustomerCombobox({ customers, value, onChange, lang, placeholder }) {
+  const [open, setOpen]     = useState(false);
+  const [query, setQuery]   = useState("");
+  const containerRef        = useRef(null);
+  const inputRef            = useRef(null);
+
+  const selected = customers.find((c) => c.id === value);
+
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase().trim();
+    if (!q) return customers;
+    return customers.filter((c) =>
+      c.fullName.toLowerCase().includes(q) ||
+      (c.customerId ?? "").toLowerCase().includes(q) ||
+      (c.phone ?? "").toLowerCase().includes(q)
+    );
+  }, [customers, query]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+        setQuery("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 10);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors hover:bg-accent ${open ? "ring-2 ring-ring ring-offset-2" : ""}`}
+      >
+        <span className={selected ? "text-foreground" : "text-muted-foreground"}>
+          {selected ? selected.fullName : placeholder}
+        </span>
+        <FiChevronDown className={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg">
+          {/* Search */}
+          <div className="flex items-center border-b border-border px-3 py-2">
+            <FiSearch className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={lang === "ps" ? "لټون..." : "Search..."}
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+
+          {/* List */}
+          <div className="max-h-52 overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <p className="px-3 py-4 text-center text-xs text-muted-foreground">
+                {lang === "ps" ? "پیرودونکی ونه موندل شو" : "No customer found"}
+              </p>
+            ) : (
+              filtered.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    onChange(c.id);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-start text-sm transition-colors hover:bg-accent"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate font-medium">{c.fullName}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {c.customerId} {c.phone ? `· ${c.phone}` : ""}
+                    </span>
+                  </span>
+                  {c.id === value && <FiCheck className="h-4 w-4 shrink-0 text-primary" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SalesPage() {
   const { user } = useAppSelector((s) => s.auth);
@@ -191,6 +291,15 @@ export default function SalesPage() {
       })
     : fuelTypes;
 
+  // Helper: get the latest price record for a fuel type
+  const getLatestPrice = (fuelTypeId) => {
+    const records = fuelPrices.filter((p) => p.fuelTypeId === fuelTypeId);
+    if (records.length === 0) return null;
+    return records.reduce((latest, p) =>
+      p.effectiveDate > latest.effectiveDate ? p : latest
+    );
+  };
+
   // When pump changes: reset fuel; auto-select only if the pump has exactly 1 fuel type
   const handlePumpChange = (pNum) => {
     form.setValue("pumpNumber", pNum);
@@ -205,7 +314,7 @@ export default function SalesPage() {
         const ft = fuelTypes.find((f) => f.id === ids[0]);
         if (ft) {
           form.setValue("fuelTypeId", ft.id);
-          const fp = fuelPrices.find((p) => p.fuelTypeId === ft.id);
+          const fp = getLatestPrice(ft.id);
           form.setValue("pricePerLiter", fp?.pricePerLiter ?? ft.pricePerLiter ?? 0);
         }
       }
@@ -215,7 +324,7 @@ export default function SalesPage() {
   // Auto-set price when fuel type changes
   const handleFuelTypeChange = (id) => {
     form.setValue("fuelTypeId", id);
-    const fp = fuelPrices.find((p) => p.fuelTypeId === id);
+    const fp = getLatestPrice(id);
     const ft = fuelTypes.find((f) => f.id === id);
     if (fp) form.setValue("pricePerLiter", fp.pricePerLiter);
     else if (ft) form.setValue("pricePerLiter", ft.pricePerLiter);
@@ -873,24 +982,15 @@ export default function SalesPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("customer")}</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={handleCustomerChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("selectCustomer")} />
-                            </SelectTrigger>
-                          </FormControl>
-
-                          <SelectContent>
-                            {creditCustomers.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.fullName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <CustomerCombobox
+                            customers={creditCustomers}
+                            value={field.value}
+                            onChange={handleCustomerChange}
+                            lang={lang}
+                            placeholder={t("selectCustomer")}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -947,7 +1047,7 @@ export default function SalesPage() {
                       <FormItem>
                         <FormLabel>{t("liters")}</FormLabel>
                         <FormControl>
-                          <PashtoInput type="number" step="0.01" {...field} />
+                          <PashtoInput type="number" step="0.01" min="0.01" onWheel={(e) => e.target.blur()} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -963,6 +1063,8 @@ export default function SalesPage() {
                     <PashtoInput
                       type="number"
                       step="0.01"
+                      min="0.01"
+                      onWheel={(e) => e.target.blur()}
                       value={amountPaid || ""}
                       onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
                       placeholder="700"
@@ -1003,6 +1105,8 @@ export default function SalesPage() {
                         <PashtoInput
                           type="number"
                           step="0.001"
+                          min="0.001"
+                          onWheel={(e) => e.target.blur()}
                           readOnly={user?.role === "operator"}
                           {...field}
                         />

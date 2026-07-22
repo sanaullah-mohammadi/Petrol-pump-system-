@@ -758,7 +758,12 @@ export default function PurchasesPage() {
                     <FormItem>
                       <FormLabel>{t("quantity")}</FormLabel>
                       <FormControl>
-                        <PashtoInput type="number" {...field} />
+                        <PashtoInput
+                          type="number"
+                          min="1"
+                          onWheel={(e) => e.target.blur()}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -771,7 +776,13 @@ export default function PurchasesPage() {
                     <FormItem>
                       <FormLabel>{t("pricePerLiterLabel")}</FormLabel>
                       <FormControl>
-                        <PashtoInput type="number" step="0.001" {...field} />
+                        <PashtoInput
+                          type="number"
+                          step="0.001"
+                          min="0.001"
+                          onWheel={(e) => e.target.blur()}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -673,15 +673,22 @@ export default function PumpsPage() {
                               reassignForm.setValue("tankAssignments", [...updated, { fuelTypeId: ftId, tankId: newTankId }]);
                             }}
                           >
-                            <SelectTrigger className="h-8 text-sm"><SelectValue placeholder={t("assignTank")} /></SelectTrigger>
+                            <SelectTrigger className="h-8 text-sm">
+                              {current?.tankId && tankById[current.tankId]
+                                ? <span>{tankById[current.tankId].name}</span>
+                                : <span className="text-muted-foreground">{t("assignTank")}</span>
+                              }
+                            </SelectTrigger>
                             <SelectContent>
                               {compatibleTanks.filter((tk) => tk.status === "active").map((tk) => {
                                 const pct = tk.capacity > 0 ? Math.round((tk.currentStock / tk.capacity) * 100) : 0;
                                 const low = tk.currentStock < tk.minimumLevel;
                                 return (
                                   <SelectItem key={tk.id} value={tk.id} textValue={tk.name}>
-                                    <span className={low ? "text-destructive" : ""}>{tk.name}</span>
-                                    <span className="ms-1 text-xs text-muted-foreground">({tk.currentStock.toLocaleString()}L · {pct}%{low ? " ⚠" : ""})</span>
+                                    <div className="flex items-center gap-1">
+                                      <span className={low ? "text-destructive" : ""}>{tk.name}</span>
+                                      <span className="text-xs text-muted-foreground">({tk.currentStock.toLocaleString()}L · {pct}%{low ? " ⚠" : ""})</span>
+                                    </div>
                                   </SelectItem>
                                 );
                               })}
@@ -816,7 +823,10 @@ export default function PumpsPage() {
                             }}
                           >
                             <SelectTrigger className="h-8 text-sm">
-                              <SelectValue placeholder={t("assignTank")} />
+                              {current?.tankId && tankById[current.tankId]
+                                ? <span>{tankById[current.tankId].name}</span>
+                                : <span className="text-muted-foreground">{t("assignTank")}</span>
+                              }
                             </SelectTrigger>
                             <SelectContent>
                               {compatibleTanks.filter((tk) => tk.status === "active").map((tk) => {
@@ -824,10 +834,12 @@ export default function PumpsPage() {
                                 const pct = tk.capacity > 0 ? Math.round((tk.currentStock / tk.capacity) * 100) : 0;
                                 return (
                                   <SelectItem key={tk.id} value={tk.id} textValue={tk.name}>
-                                    <span className={low ? "text-destructive" : ""}>{tk.name}</span>
-                                    <span className="ms-1 text-xs text-muted-foreground">
-                                      ({tk.currentStock.toLocaleString()}L · {pct}%{low ? " ⚠" : ""})
-                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span className={low ? "text-destructive" : ""}>{tk.name}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        ({tk.currentStock.toLocaleString()}L · {pct}%{low ? " ⚠" : ""})
+                                      </span>
+                                    </div>
                                   </SelectItem>
                                 );
                               })}

@@ -93,11 +93,11 @@
     "id": "10",
     "paymentId": "SPAY-010",
     "supplierName": "Gulf Energy Supply",
-    "amount": 285000,
-    "date": "2026-05-25",
+    "amount": 570000,
+    "date": "2026-05-26",
     "paymentMethod": "bank_transfer",
     "purchaseId": "10",
-    "notes": "Partial payment for PUR-010 — half advance"
+    "notes": "Full payment for PUR-010"
   },
   {
     "id": "11",
@@ -108,5 +108,35 @@
     "paymentMethod": "bank_transfer",
     "purchaseId": "11",
     "notes": "Full payment for PUR-011"
+  },
+  {
+    "id": "12",
+    "paymentId": "SPAY-012",
+    "supplierName": "Arab Gas Trading",
+    "amount": 195000,
+    "date": "2026-07-07",
+    "paymentMethod": "bank_transfer",
+    "purchaseId": "21",
+    "notes": "Full payment for PUR-021"
+  },
+  {
+    "id": "13",
+    "paymentId": "SPAY-013",
+    "supplierName": "wafadar",
+    "amount": 84200,
+    "date": "2026-07-09",
+    "paymentMethod": "cash",
+    "purchaseId": "22",
+    "notes": "Partial payment for PUR-022 — balance 800 AFN remaining"
+  },
+  {
+    "id": "14",
+    "paymentId": "SPAY-014",
+    "supplierName": "luilala",
+    "amount": 90000,
+    "date": "2026-07-11",
+    "paymentMethod": "bank_transfer",
+    "purchaseId": "23",
+    "notes": "Full payment for PUR-023"
   }
 ]

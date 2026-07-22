@@ -49,7 +49,10 @@ const PAYMENT_TERM_LABELS = {
 const schema = z.object({
   companyName:   z.string().min(1, "Company name is required"),
   contactPerson: z.string().min(1, "Contact person is required"),
-  phone:         z.string().min(1, "Phone is required"),
+  phone:         z.string()
+    .min(10, "Phone must be exactly 10 digits")
+    .max(10, "Phone must be exactly 10 digits")
+    .regex(/^\d{10}$/, "Phone must be 10 digits only"),
   email:         z.string().email("Invalid email").or(z.literal("")).optional(),
   address:       z.string().optional(),
   fuelTypes:     z.array(z.string()).min(1, "Select at least one fuel type"),
@@ -247,7 +250,6 @@ export default function SuppliersPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* ── Main table card ──────────────────────────────────────────── */}
         <Card>
           <CardHeader className="pb-3">
@@ -451,7 +453,19 @@ export default function SuppliersPage() {
                 <FormField control={form.control} name="phone" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("phone")} <span className="text-destructive">*</span></FormLabel>
-                    <FormControl><Input placeholder="0700123456" {...field} /></FormControl>
+                    <FormControl>
+                      <Input
+                        placeholder="0700123456"
+                        maxLength={10}
+                        inputMode="numeric"
+                        onKeyDown={(e) => {
+                          if (!/[\d]/.test(e.key) && !["Backspace","Delete","Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

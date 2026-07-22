@@ -116,20 +116,33 @@ export default function ProfitLossPage() {
   const pExpenses = expenses.filter((e) => inRange(e.date, range));
   const pLosses = losses.filter((l) => inRange(l.date, range));
 
-  const totalRevenue = pSales.reduce((a, s) => a + s.totalAmount, 0);
-  const fuelCost = pPurchases.reduce((a, p) => a + p.totalAmount, 0);
-  const totalExpenses = pExpenses.reduce((a, e) => a + e.amount, 0);
-  const totalLosses = pLosses.reduce((a, l) => a + l.amount, 0);
-  const grossProfit = totalRevenue - fuelCost;
-  const netProfit = grossProfit - totalExpenses - totalLosses;
+  // ── Weighted-average cost per litre per fuel type (all purchases ever) ────
+  // Using ALL purchases as cost basis so new deliveries don't warp per-period P&L.
+  const avgCostPerLitre = {};
+  fuelTypes.forEach((ft) => {
+    const ftPurchases = purchases.filter((p) => p.fuelTypeId === ft.id);
+    const totalQty  = ftPurchases.reduce((a, p) => a + (p.quantity  ?? 0), 0);
+    const totalCost = ftPurchases.reduce((a, p) => a + (p.totalAmount ?? 0), 0);
+    avgCostPerLitre[ft.id] = totalQty > 0 ? totalCost / totalQty : 0;
+  });
 
-  // Fuel-wise profit
+  // ── COGS = litres sold in period × weighted-avg cost per litre ────────────
+  const cogsForSales = (salesList) =>
+    salesList.reduce((a, s) => a + (s.liters ?? 0) * (avgCostPerLitre[s.fuelTypeId] ?? 0), 0);
+
+  const totalRevenue  = pSales.reduce((a, s) => a + s.totalAmount, 0);
+  const fuelCost      = cogsForSales(pSales);          // COGS, not total purchases
+  const totalExpenses = pExpenses.reduce((a, e) => a + e.amount, 0);
+  const totalLosses   = pLosses.reduce((a, l) => a + l.amount, 0);
+  const grossProfit   = totalRevenue - fuelCost;
+  const netProfit     = grossProfit - totalExpenses - totalLosses;
+
+  // ── Fuel-wise profit (COGS-based) ─────────────────────────────────────────
   const fuelWise = fuelTypes
     .map((ft) => {
       const ftSales = pSales.filter((s) => s.fuelTypeId === ft.id);
-      const ftPurchases = pPurchases.filter((p) => p.fuelTypeId === ft.id);
-      const rev = ftSales.reduce((a, s) => a + s.totalAmount, 0);
-      const cost = ftPurchases.reduce((a, p) => a + p.totalAmount, 0);
+      const rev  = ftSales.reduce((a, s) => a + s.totalAmount, 0);
+      const cost = cogsForSales(ftSales);
       return { name: ft.name, revenue: rev, cost, profit: rev - cost };
     })
     .filter((f) => f.revenue > 0 || f.cost > 0);

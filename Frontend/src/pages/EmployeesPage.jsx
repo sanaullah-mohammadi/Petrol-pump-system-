@@ -36,7 +36,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const commonFields = {
   fullName:  z.string().min(1, "Name is required"),
   email:     z.string().min(1, "Email is required").email("Enter a valid email"),
-  phone:     z.string().min(1, "Phone is required"),
+  phone:     z.string()
+    .min(10, "Phone must be exactly 10 digits")
+    .max(10, "Phone must be exactly 10 digits")
+    .regex(/^\d{10}$/, "Phone must be 10 digits only"),
   idNumber:  z.string().min(1, "ID number is required"),
   position:  z.string().min(1, "Position is required"),
   salary:    z.coerce.number().min(1, "Salary must be > 0"),
@@ -682,7 +685,19 @@ export default function EmployeesPage() {
                 <FormField control={form.control} name="phone" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("phone")} <span className="text-destructive">*</span></FormLabel>
-                    <FormControl><Input placeholder="0501234567" {...field} /></FormControl>
+                    <FormControl>
+                      <Input
+                        placeholder="0501234567"
+                        maxLength={10}
+                        inputMode="numeric"
+                        onKeyDown={(e) => {
+                          if (!/[\d]/.test(e.key) && !["Backspace","Delete","Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

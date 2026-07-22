@@ -53,10 +53,20 @@ import { Textarea } from "@/components/ui/textarea";
 // ── Zod schemas ───────────────────────────────────────────────────────────────
 const customerSchema = z.object({
   fullName:    z.string().min(1, "Full name is required"),
-  phone:       z.string().min(1, "Phone is required"),
+  phone:       z.string()
+    .min(10, "Phone must be exactly 10 digits")
+    .max(10, "Phone must be exactly 10 digits")
+    .regex(/^\d{10}$/, "Phone must be 10 digits only"),
   idNumber:    z.string().optional(),
   type:        z.enum(["credit", "cash"]),
-  creditLimit: z.coerce.number().min(0),
+  creditLimit: z.preprocess(
+    (v) => {
+      if (v === "" || v === undefined || v === null || Number.isNaN(v)) return 0;
+      const n = Number(v);
+      return Number.isNaN(n) ? 0 : n;
+    },
+    z.number().min(0),
+  ),
   status:      z.enum(["active", "inactive", "blocked"]),
   notes:       z.string().optional(),
 });
@@ -349,16 +359,19 @@ export default function CustomersPage() {
 
   const onCustomerSubmit = (values) => {
     const customerId = formDialog.item?.customerId ?? generateCustomerId(customers);
+    const creditLimit = values.type === "credit"
+      ? (isNaN(Number(values.creditLimit)) ? 0 : Number(values.creditLimit))
+      : 0;
     const data = {
       customerId,
-      fullName:    values.fullName.trim(),
-      phone:       values.phone.trim(),
-      idNumber:    values.idNumber?.trim() ?? "",
-      type:        values.type,
-      creditLimit: values.type === "credit" ? values.creditLimit : 0,
+      fullName:      values.fullName.trim(),
+      phone:         values.phone.trim(),
+      idNumber:      values.idNumber?.trim() ?? "",
+      type:          values.type,
+      creditLimit,
       creditBalance: formDialog.item?.creditBalance ?? 0,
-      status:      values.status,
-      notes:       values.notes?.trim() ?? "",
+      status:        values.status,
+      notes:         values.notes?.trim() ?? "",
     };
     if (formDialog.item) {
       updateMutation.mutate({ id: formDialog.item.id, data });
@@ -730,7 +743,19 @@ export default function CustomersPage() {
                 <FormField control={customerForm.control} name="phone" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("phone")} <span className="text-destructive">*</span></FormLabel>
-                    <FormControl><Input placeholder="0501234567" {...field} /></FormControl>
+                    <FormControl>
+                      <Input
+                        placeholder={lang === "ps" ? "د تلیفون شمیره" : "Phone Number"}
+                        maxLength={10}
+                        inputMode="numeric"
+                        onKeyDown={(e) => {
+                          if (!/[\d]/.test(e.key) && !["Backspace","Delete","Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -748,7 +773,10 @@ export default function CustomersPage() {
                 <FormField control={customerForm.control} name="type" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("type")} <span className="text-destructive">*</span></FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select value={field.value} onValueChange={(v) => {
+                      field.onChange(v);
+                      if (v === "cash") customerForm.setValue("creditLimit", 0);
+                    }}>
                       <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="credit">{t("credit")}</SelectItem>
@@ -765,7 +793,15 @@ export default function CustomersPage() {
                 <FormField control={customerForm.control} name="creditLimit" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("creditLimitLabel")} <span className="text-destructive">*</span></FormLabel>
-                    <FormControl><PashtoInput type="number" step="1" min="0" {...field} /></FormControl>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="1"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
